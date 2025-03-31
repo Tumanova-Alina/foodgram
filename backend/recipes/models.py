@@ -120,12 +120,12 @@ class Ingredient(models.Model):
         ordering = ('id',)
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['name', 'measurement_unit'],
-                name='unique_name_measurement_unit'
-            )
-        ]
+        # constraints = [
+        #     models.UniqueConstraint(
+        #         fields=['name', 'measurement_unit'],
+        #         name='unique_name_measurement_unit'
+        #     )
+        # ]
 
     def __str__(self):
         return self.name
@@ -218,7 +218,8 @@ class RecipeIngredient(models.Model):
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
-        related_name='recipe', verbose_name='Ингредиент'
+        related_name='recipe',
+        verbose_name='Ингредиент'
     )
     recipe = models.ForeignKey(
         Recipe,
@@ -258,9 +259,9 @@ class Follow(models.Model):
         verbose_name='Автор'
     )
     pub_date = models.DateTimeField(
-        'Дата подписки',
         auto_now_add=True,
-        db_index=True
+        db_index=True,
+        verbose_name='Дата подписки',
     )
 
     class Meta:

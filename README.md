@@ -2,13 +2,14 @@
 
 По адресу http://localhost изучите фронтенд веб-приложения, а по адресу http://localhost/api/docs/ — спецификацию API.
 
+![Github actions](https://github.com/Tumanova-Alina/foodgram/actions/workflows/main.yml/badge.svg)
 
-# Foodgram - социальная сеть для размещения фотографий котиков.
+# Foodgram - проект, созданный, чтобы пользователи делились своими навыками готовки и учились у других новому.
  
  
 ### Описание проекта: 
 ________________________________________________________________________________________________________
-Foodgram - проект для любителей котиков и их владельцев. Зарегистрированные пользователи могут делиться фотографиями своих питомцев и их достижениями, удалять и редактировать посты. 
+Foodgram - сайт, на котором пользователи публикуют свои рецепты, добавляют чужие рецепты в избранное и подписываются на публикации других авторов. Зарегистрированным пользователям также доступен сервис «Список покупок». Он позволяет создавать список продуктов, которые нужно купить для приготовления выбранных блюд.
 
 ### Технологии:
 ________________________________________________________________________________________________________
@@ -44,6 +45,7 @@ ________________________________________________________________________________
    DB_PORT=5432
    SECRET_KEY=django_settings_secret_key
    ALLOWED_HOSTS=127.0.0.1, localhost
+   DB_ENGINE=PostgreSQL_или_другая_бд
     ```
 
  - Создание repository secrets в GitHub Actions:
@@ -68,19 +70,19 @@ ________________________________________________________________________________
 
     ```bash
     cd frontend
-    docker build -t username/kittygram_frontend .
-    cd ../backend
-    docker build -t username/kittygram_backend .
-    cd ../nginx
-    docker build -t username/kittygram_gateway . 
+    docker build -t username/foodgram_frontend .
+    cd ../foodgram_backend
+    docker build -t username/foodgram_backend .
+    cd ../infra
+    docker build -t username/foodgram_gateway . 
     ```
 
  - Загрузка образов на DockerHub:
 
     ```bash
-    docker push username/kittygram_frontend
-    docker push username/kittygram_backend
-    docker push username/kittygram_gateway
+    docker push username/foodgram_frontend
+    docker push username/foodgram_backend
+    docker push username/foodgram_gateway
     ```
   
 ### Деплой на удалённый сервер:
@@ -91,10 +93,10 @@ ________________________________________________________________________________
     ssh -i путь_до_файла_с_SSH_ключом/название_файла_с_SSH_ключом имя_пользователя@ip_адрес_сервера 
     ```
 
- - Создание на сервере директории kittygram через терминал:
+ - Создание на сервере директории foodgram через терминал:
 
     ```bash
-    mkdir kittygram
+    mkdir foodgram
     ```
 
  - Установка docker compose на сервер:
@@ -107,10 +109,10 @@ ________________________________________________________________________________
     sudo apt-get install docker-compose-plugin
     ```
 
- - Копирование файлов docker-compose.production.yml и .env в директорию kittygram/ :
+ - Копирование файлов docker-compose.production.yml и .env в директорию foodgram/ :
 
     ```bash
-    scp -i path_to_SSH/SSH_name docker-compose.production.yml username@server_ip:/home/username/kittygram/docker-compose.production.yml
+    scp -i path_to_SSH/SSH_name docker-compose.production.yml username@server_ip:/home/username/foodgram/docker-compose.production.yml
     ```
 
  - Запуск docker compose в режиме демона:
@@ -127,6 +129,12 @@ ________________________________________________________________________________
     sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/collected_static/. /backend_static/static/
     ```
 
+ - Добавление ингредиентов в базу данных: Cкопируйте содержимое папки `data` на сервер. В папке есть файл ingredients.csv с ингредиентами для базы данных. Добавьте их в базу с помощью команды:
+
+    ```bash
+    sudo docker compose -f docker-compose.production.yml exec backend python manage.py import_csv --path /data/ingredients.csv
+    ```
+
  - На сервере открытие в редакторе nano конфига nginx:
 
     ```bash
@@ -139,7 +147,7 @@ ________________________________________________________________________________
     ```bash
     location / {
         proxy_set_header Host $http_host;
-        proxy_pass http://127.0.0.1:9000;
+        proxy_pass http://127.0.0.1:8080;
     }
     ```
 
@@ -177,7 +185,7 @@ ________________________________________________________________________________
     }
     ```
 
-- Получение списка пользователей по GET-запросу пользователя foodbloger на /api/users/:
+- Получение списка пользователей по GET-запросу пользователя foodbloger:
 
     ```
     {
@@ -240,7 +248,7 @@ ________________________________________________________________________________
  
 ### Cсылка на приложение foodgram:
 ________________________________________________________________________________________________________
-- #### ...
+- #### https://foodgramsite.work.gd/
 ________________________________________________________________________________________________________
 
 ## Автор:

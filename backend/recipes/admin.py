@@ -32,11 +32,7 @@ class RecipeAdmin(ModelAdmin):
 
 @register(Follow)
 class FollowAdmin(ModelAdmin):
-    list_display = (
-        'id',
-        'user',
-        'author'
-    )
+    list_display = ('id', 'user', 'author')
     list_filter = ('user', 'author')
     empty_value_display = 'Пусто'
 

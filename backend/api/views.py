@@ -61,7 +61,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    """Вьюсет для работы с обьектами класса User и подписки на авторов."""
+    """ViewSet для пользователей и подписки на авторов."""
 
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -76,7 +76,7 @@ class UserViewSet(viewsets.ModelViewSet):
         url_name='subscriptions',
     )
     def subscriptions(self, request):
-        """Метод для создания страницы подписок."""
+        """Создание страницы подписок."""
         queryset = User.objects.filter(follow__user=self.request.user)
         if queryset:
             pages = self.paginate_queryset(queryset)
@@ -84,7 +84,7 @@ class UserViewSet(viewsets.ModelViewSet):
                                           context={'request': request})
             return self.get_paginated_response(serializer.data)
         return Response(HAVE_NO_SUBSCRIPTIONS,
-                        status=status.HTTP_400_BAD_REQUEST)
+                        status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=True,
@@ -94,7 +94,7 @@ class UserViewSet(viewsets.ModelViewSet):
         url_name='subscribe',
     )
     def subscribe(self, request, id):
-        """Метод для управления подписками."""
+        """Управление подписками."""
         user = request.user
         author = get_object_or_404(User, id=id)
         change_subscription_status = Follow.objects.filter(
@@ -123,7 +123,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class RecipeViewSet(ModelViewSet):
-    """ViewSet для обработки запросов, связанных с рецептами."""
+    """ViewSet для рецептов."""
 
     queryset = Recipe.objects.all()
     permission_classes = (IsAdminAuthorOrReadOnly,)
@@ -131,7 +131,7 @@ class RecipeViewSet(ModelViewSet):
     filterset_class = RecipeFilter
 
     def get_serializer_class(self):
-        """Метод для вызова сериализатора."""
+        """Вызов сериализатора."""
         if self.action in ('list', 'retrieve'):
             return RecipeSerializer
         elif self.action in ('create', 'partial_update'):
@@ -154,20 +154,20 @@ class RecipeViewSet(ModelViewSet):
         """Управление избранным."""
         user = request.user
         recipe = get_object_or_404(Recipe, id=pk)
+        favorite, created = Favorite.objects.get_or_create(
+            user=user, recipe=recipe)
         if request.method == 'POST':
-            if Favorite.objects.filter(user=user, recipe=recipe).exists():
+            if not created:
                 return Response(
                     {'errors': RECIPE_ALREADY_EXISTS_IN_FAVORITES},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            Favorite.objects.create(user=user, recipe=recipe)
             serializer = FavoriteSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         if request.method == 'DELETE':
-            obj = Favorite.objects.filter(user=user, recipe=recipe)
-            if obj.exists():
-                obj.delete()
+            if created:
+                favorite.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
             return Response(
                 {'errors': RECIPE_NOT_IN_FAVORITES},
@@ -185,21 +185,21 @@ class RecipeViewSet(ModelViewSet):
         """Управление списком покупок."""
         user = request.user
         recipe = get_object_or_404(Recipe, id=pk)
+        shopping_list, created = ShoppingList.objects.get_or_create(
+            user=user, recipe=recipe)
 
         if request.method == 'POST':
-            if ShoppingList.objects.filter(user=user, recipe=recipe).exists():
+            if not created:
                 return Response(
                     {'errors': RECIPE_ALREADY_EXISTS_IN_SHOPPING_LIST},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            ShoppingList.objects.create(user=user, recipe=recipe)
             serializer = FavoriteSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         if request.method == 'DELETE':
-            obj = ShoppingList.objects.filter(user=user, recipe__id=pk)
-            if obj.exists():
-                obj.delete()
+            if created:
+                shopping_list.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
             return Response(
                 {'errors': RECIPE_NOT_IN_SHOPPING_LIST},

@@ -3,7 +3,7 @@ from rest_framework import routers
 
 from .views import (
     IngredientViewSet, TagViewSet, RecipeViewSet,
-    UserViewSet
+    UserViewSet, CurrentUserPhoto
 )
 
 app_name = 'api'
@@ -17,6 +17,10 @@ router_v1.register('users', UserViewSet, basename='users')
 
 urlpatterns = [
     path('v1/', include(router_v1.urls)),
-    path('v1/', include('djoser.urls')),
-    path('v1/auth/', include('djoser.urls.authtoken')),
+    path('me/profile_image/', CurrentUserPhoto.as_view({
+        'put': 'update',
+        'delete': 'destroy'
+    })),
+    path('', include('djoser.urls')),
+    path('auth/', include('djoser.urls.authtoken')),
 ]
