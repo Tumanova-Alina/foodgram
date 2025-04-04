@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404
 from django.core.files.base import ContentFile
 from rest_framework import serializers, status
 from rest_framework.response import Response
-
+from .constants import COLOR_HAVE_NO_NAME
 from recipes.models import Ingredient, RecipeIngredient
 
 
@@ -17,7 +17,7 @@ class Hex2NameColor(serializers.Field):
         try:
             data = webcolors.hex_to_name(data)
         except ValueError:
-            raise serializers.ValidationError('У этого цвета нет имени')
+            raise serializers.ValidationError(COLOR_HAVE_NO_NAME)
         return data
 
 

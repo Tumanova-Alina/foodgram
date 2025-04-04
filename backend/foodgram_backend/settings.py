@@ -157,19 +157,25 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 USER_PROFILE = 'me'
 
+# DJOSER = {
+#     'LOGIN_FIELD': 'email',
+#     'HIDE_USERS': False,
+#     'PASSWORD_CHANGED_EMAIL_CONFIRMATION': False,
+#     'SERIALIZERS': {
+#         'user_create': 'api.serializers.CreateUserSerializer',
+#         'user': 'api.serializers.UserSerializer',
+#         'current_user': 'api.serializers.UserSerializer'
+#     },
+#     'PERMISSIONS': {
+#         'user_list': ['rest_framework.permissions.AllowAny'],
+#         'user': ['rest_framework.permissions.AllowAny'],
+#     },
+#     'TOKEN_MODEL': 'rest_framework.authtoken.models.Token',
+#     # 'USER_ID_FIELD': 'pk'
+# }
+
 DJOSER = {
-    'LOGIN_FIELD': 'email',
-    'HIDE_USERS': False,
-    'SERIALIZERS': {
-        'user_create': 'api.serializers.CreateUserSerializer',
-        'user': 'api.serializers.UserSerializer',
-        # 'current_user': 'api.serializers.UserSerializer'
-    },
-    'PERMISSIONS': {
-        'user_list': ['rest_framework.permissions.AllowAny'],
-        'user': ['rest_framework.permissions.AllowAny'],
-    },
-    'USER_ID_FIELD': 'pk'
+    'LOGIN_FIELD': 'email'
 }
 
 # CORS_URLS_REGEX = r'^/api/.*$'
@@ -181,7 +187,7 @@ CORS_ALLOWED_ORIGINS = [
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.AllowAny',
     ],
 
     'DEFAULT_AUTHENTICATION_CLASSES': [

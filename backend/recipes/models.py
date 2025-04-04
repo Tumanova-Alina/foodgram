@@ -2,6 +2,12 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from .validators import (
     min_time_validator, ingredient_amount_validator, validate_username)
+from api.constants import (
+    MAX_LENGTH_USERNAME, MAX_LENGTH_FIRST_NAME,
+    MAX_LENGTH_LAST_NAME, MAX_LENGTH_NAME,
+    MAX_LENGTH_SLUG, MAX_EMAIL_LENGTH,
+    MAX_COLOR_LENGTH, MAX_MEASUREMENT_UNIT_LENGTH
+)
 
 
 USER = 'user'
@@ -11,16 +17,6 @@ ROLES = (
     (ADMIN, 'Администратор'),
     (USER, 'Пользователь'),
 )
-
-
-MAX_LENGTH_USERNAME = 150
-MAX_LENGTH_FIRST_NAME = 150
-MAX_LENGTH_LAST_NAME = 150
-MAX_LENGTH_NAME = 256
-MAX_LENGTH_SLUG = 200
-MAX_EMAIL_LENGTH = 254
-MAX_COLOR_LENGTH = 7
-MAX_MEASUREMENT_UNIT_LENGTH = 200
 
 
 class User(AbstractUser):
@@ -58,8 +54,8 @@ class User(AbstractUser):
         null=True,
         verbose_name='Фамилия'
     )
-    profile_image = models.ImageField(
-        upload_to='recipes/images/profile_images/',
+    avatar = models.ImageField(
+        upload_to='users/',
         null=True,
         blank=False,
         verbose_name='Фото профиля'
@@ -146,7 +142,7 @@ class Recipe(models.Model):
     )
     image = models.ImageField(
         verbose_name='Фотография рецепта',
-        upload_to='recipes/images/recipe_images/',
+        upload_to='recipes/images/',
     )
     text = models.TextField(
         verbose_name='Описание рецепта',
