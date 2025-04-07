@@ -1,41 +1,38 @@
 import os
+
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.serializers import SetPasswordSerializer
-from rest_framework import viewsets, status
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import (
-    AllowAny, IsAuthenticatedOrReadOnly, IsAuthenticated
+    AllowAny, IsAuthenticated
 )
 from rest_framework.response import Response
-from rest_framework.viewsets import ModelViewSet
-from rest_framework.mixins import DestroyModelMixin, UpdateModelMixin
-from rest_framework.viewsets import GenericViewSet
 from rest_framework.serializers import ValidationError
+from rest_framework.viewsets import ModelViewSet
 
 from recipes.models import (
-    Ingredient, Tag, Recipe, Favorite, ShoppingList, Follow,
-    RecipeIngredient,
-)
-from recipes.models import User
-from .filters import IngredientFilter, RecipeFilter
-from .permissions import IsAdminAuthorOrReadOnly
-from .serializers import (
-    TagSerializer, IngredientSerializer,
-    RecipeSerializer, UserSerializer, CreateRecipeSerializer,
-    FollowSerializer, FavoriteSerializer, CurrentUserPhotoSerializer,
-    CreateUserSerializer
+    Favorite, Follow, Ingredient, Recipe, RecipeIngredient,
+    ShoppingList, Tag, User
 )
 from .constants import (
-    HAVE_NO_SUBSCRIPTIONS, CANT_SUBSCRIBE_TO_YOURSELF,
-    ALREADY_SUBSCRIBED, SUCCESSFULLY_SUBSCRIBED,
-    SUCCESSFULLY_DELETED_SUBSCRIPTION, NOT_SUBSCRIBED,
+    ALREADY_SUBSCRIBED, CANT_SUBSCRIBE_TO_YOURSELF, HAVE_NO_SUBSCRIPTIONS,
+    NO_RECIPES_TO_GENERATE_SHOPPING_LIST, NOT_SUBSCRIBED,
     RECIPE_ALREADY_EXISTS_IN_FAVORITES, RECIPE_ALREADY_EXISTS_IN_SHOPPING_LIST,
     RECIPE_NOT_IN_FAVORITES, RECIPE_NOT_IN_SHOPPING_LIST,
-    NO_RECIPES_TO_GENERATE_SHOPPING_LIST
+    SUCCESSFULLY_DELETED_SUBSCRIPTION, SUCCESSFULLY_SUBSCRIBED,
+    INVALID_PASSWORD, HAVE_NO_AVATAR, METHOD_NOT_ALLOWED
+)
+from .filters import IngredientFilter, RecipeFilter
+from .permissions import IsAdminAuthorOrReadOnly, ReadOnly
+from .serializers import (
+    CreateRecipeSerializer, CreateUserSerializer, CurrentUserPhotoSerializer,
+    FollowSerializer, IngredientSerializer,
+    RecipeSerializer, TagSerializer, UserSerializer
 )
 
 
@@ -61,7 +58,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    """ViewSet для пользователей и подписки на авторов."""
+    """ViewSet для пользователей и подписок."""
 
     queryset = User.objects.all()
     permission_classes = (AllowAny,)
@@ -72,17 +69,12 @@ class UserViewSet(viewsets.ModelViewSet):
             return CreateUserSerializer
         return UserSerializer
 
-    # def perform_create(self, serializer):
-    #     try:
-    #         serializer.save()
-    #     except ValidationError as e:
-    #         return Response(
-    #             {'error': e.detail}, status=status.HTTP_400_BAD_REQUEST)
-
     @action(
         methods=('get',),
         detail=False,
         url_path='me',
+        url_name='me',
+        # permission_classes=(IsAuthenticated,)
         permission_classes=(AllowAny,)
     )
     def user_profile(self, request):
@@ -91,28 +83,61 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    # @action(
-    #     methods=('post',),
-    #     detail=False,
-    #     url_path='set_password',
-    #     permission_classes=(IsAuthenticated,)
-    # )
-    # def set_password(self, request, *args, **kwargs):
-    #     """Изменение пароля."""
-    #     serializer = SetPasswordSerializer(request.data)
-    #     current_password = serializer.data['current_password']
-    #     is_password_valid = self.request.user.check_password(current_password)
-    #     if is_password_valid:
-    #         self.request.user.set_password(serializer.data['new_password'])
-    #         self.request.user.save()
-    #         return Response(status=status.HTTP_204_NO_CONTENT)
-    #     else:
-    #         raise ValidationError('invalid_password')
+    @action(
+        detail=False,
+        methods=('put', 'delete'),
+        url_path='me/avatar',
+        url_name='me/avatar',
+        permission_classes=(IsAuthenticated,)
+    )
+    def avatar(self, request):
+        """Добавление/удаление аватара."""
+        user = request.user
+        if request.method == 'PUT':
+            serializer = CurrentUserPhotoSerializer(
+                user, data=request.data, partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(
+                {'avatar': request.build_absolute_uri(user.avatar.url)},
+                status=status.HTTP_200_OK
+            )
+        elif request.method == 'DELETE':
+            if user.avatar:
+                user.avatar.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response(
+                {'detail': HAVE_NO_AVATAR},
+                status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {'detail': METHOD_NOT_ALLOWED},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED
+        )
+
+    @action(
+        methods=('post',),
+        detail=False,
+        url_path='set_password',
+        url_name='set_password',
+        permission_classes=(IsAuthenticated,)
+    )
+    def set_password(self, request, *args, **kwargs):
+        """Изменение пароля."""
+        serializer = SetPasswordSerializer(request.data)
+        current_password = serializer.data['current_password']
+        is_password_valid = self.request.user.check_password(current_password)
+        if is_password_valid:
+            self.request.user.set_password(serializer.data['new_password'])
+            self.request.user.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            raise ValidationError(INVALID_PASSWORD)
 
     @action(
         detail=False,
         methods=('get',),
-        permission_classes=(IsAuthenticated, ),
+        permission_classes=(IsAuthenticated,),
         url_path='subscriptions',
         url_name='subscriptions',
     )
@@ -217,13 +242,17 @@ class RecipeViewSet(ModelViewSet):
             favorite.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True,
-            url_path='get-link')
+    @action(
+        detail=True,
+        url_path='get-link',
+        url_name='get-link',
+        permission_classes=(IsAuthenticated,),
+    )
     def get_link(self, request, pk=None):
-        recipe_id = self.kwargs[self.lookup_field]
+        recipe = get_object_or_404(Recipe, id=pk)
         frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:3000')
-        url_to_recipes = os.getenv('URL_TO_RECIPES', 'recipes')
-        short_link = f'{frontend_url}/{url_to_recipes}/{recipe_id}/'
+        recipes_url = os.getenv('RECIPES_URL', 'recipes')
+        short_link = f'{frontend_url}/{recipes_url}/{recipe.id}/'
         return Response({'short-link': short_link})
 
     @action(
@@ -235,65 +264,39 @@ class RecipeViewSet(ModelViewSet):
     )
     def shopping_list(self, request, pk):
         """Управление списком покупок."""
-        user = request.user
         recipe = get_object_or_404(Recipe, id=pk)
-        shopping_list, created = ShoppingList.objects.get_or_create(
-            user=user, recipe=recipe)
+        shopping_item = ShoppingList.objects.filter(recipe=recipe)
 
         if request.method == 'POST':
-            if not created:
+            if shopping_item.exists():
                 return Response(
-                    {'errors': RECIPE_ALREADY_EXISTS_IN_SHOPPING_LIST.format(
-                        recipe=recipe)}, status=status.HTTP_400_BAD_REQUEST
+                    {'error': RECIPE_ALREADY_EXISTS_IN_SHOPPING_LIST},
+                    status=status.HTTP_400_BAD_REQUEST
                 )
-            serializer = FavoriteSerializer(recipe)
+            ShoppingList.objects.create(user=request.user, recipe=recipe)
+            serializer = RecipeSerializer(recipe, context={'request': request})
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        if request.method == 'DELETE':
-            if created:
-                shopping_list.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            return Response(
-                {'errors': RECIPE_NOT_IN_SHOPPING_LIST.format(recipe=recipe)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-    # @action(
-    #     detail=False,
-    #     methods=('get',),
-    #     permission_classes=(IsAuthenticated,),
-    #     url_path='cart',
-    #     url_name='cart',
-    # )
-    # def get_shopping_list(self, request):
-    #     """Получение текущего списка покупок."""
-    #     user = request.user
-    #     shopping_list = ShoppingList.objects.filter(
-    #         user=user).select_related('recipe')
-
-    #     data = []
-    #     for item in shopping_list:
-    #         ingredients = RecipeIngredient.objects.filter(
-    #             recipe=item.recipe).values(
-    #             'ingredient__name', 'ingredient__measurement_unit', 'amount'
-    #         ).annotate(sum=Sum('amount'))
-    #         data.append({
-    #             'recipe': item.recipe.name,
-    #             'ingredients': list(ingredients)
-    #         })
-    #     return Response(data)
+        elif request.method == 'DELETE':
+            if not shopping_item.exists():
+                return Response(
+                    {'error': RECIPE_NOT_IN_SHOPPING_LIST},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            shopping_item.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
     @staticmethod
-    def ingredients_to_txt(ingredients):
+    def get_shopping_list(ingredients):
         """Создание списка для загрузки."""
-        shopping_list = 'Список покупок:\n'
+        shopping_list = ["Список покупок:"]
         for ingredient in ingredients:
-            shopping_list += (
+            shopping_list.append(
                 f"{ingredient['ingredient__name']} - "
                 f"{ingredient['total']}"
                 f"({ingredient['ingredient__measurement_unit']})\n"
             )
-        return shopping_list
+        return "\n".join(shopping_list)
 
     @action(
         detail=False,
@@ -315,17 +318,6 @@ class RecipeViewSet(ModelViewSet):
                 {"error": NO_RECIPES_TO_GENERATE_SHOPPING_LIST},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        shopping_list = self.ingredients_to_txt(ingredients)
+        shopping_list = self.get_shopping_list(ingredients)
         return HttpResponse(
             shopping_list, content_type='text/plain; charset=UTF-8')
-
-
-class CurrentUserPhoto(UpdateModelMixin, DestroyModelMixin, GenericViewSet):
-    serializer_class = CurrentUserPhotoSerializer
-    permission_classes = (IsAdminAuthorOrReadOnly,)
-
-    def get_object(self):
-        return self.request.user
-
-    def perform_destroy(self, instance):
-        instance.avatar.delete()

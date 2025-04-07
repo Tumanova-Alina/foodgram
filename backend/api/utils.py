@@ -1,12 +1,10 @@
 import base64
 
 import webcolors
-from django.shortcuts import get_object_or_404
 from django.core.files.base import ContentFile
-from rest_framework import serializers, status
-from rest_framework.response import Response
+from rest_framework import serializers
+
 from .constants import COLOR_HAVE_NO_NAME
-from recipes.models import Ingredient, RecipeIngredient
 
 
 class Hex2NameColor(serializers.Field):

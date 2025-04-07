@@ -1,15 +1,17 @@
+from django.db import transaction
+from django.shortcuts import get_object_or_404
+
 from djoser.serializers import UserSerializer as BaseUserSerializer
 from rest_framework import serializers
-from django.shortcuts import get_object_or_404
-from django.db import transaction
 from rest_framework.serializers import ModelSerializer
+
 from recipes.models import (
-    Tag, Ingredient, Recipe, RecipeIngredient,
-    Follow, RecipeTag, Favorite, ShoppingList,
+    Favorite, Follow, Ingredient, Recipe, RecipeIngredient,
+    RecipeTag, ShoppingList, Tag, User
 )
-from recipes.models import User
+from recipes.validators import (
+    unique_ingredients_validator, ingredient_amount_validator)
 from .utils import Base64ImageField, Hex2NameColor
-from recipes.validators import unique_ingredients_validator
 
 
 class TagSerializer(ModelSerializer):
@@ -37,11 +39,11 @@ class UserSerializer(BaseUserSerializer):
     class Meta:
         model = User
         fields = ('id', 'username', 'first_name',
-                  'last_name', 'email', 'is_subscribed')
+                  'last_name', 'email', 'avatar', 'is_subscribed')
 
     def get_is_subscribed(self, obj):
         """Проверка подписки."""
-        user = self.context.get('request').user
+        user = self.context['request'].user
         if user.is_anonymous:
             return False
         return Follow.objects.filter(user=user, author=obj.id).exists()
@@ -56,18 +58,6 @@ class CreateUserSerializer(UserSerializer):
         model = User
         fields = ('email', 'id', 'username', 'first_name',
                   'last_name', 'password')
-        # extra_kwargs = {'password': {'write_only': True}}
-
-    # def create(self, validated_data):
-    #     user = User.objects.create(
-    #         username=validated_data['username'],
-    #         first_name=validated_data['first_name'],
-    #         last_name=validated_data['last_name'],
-    #         email=validated_data['email'],
-    #     )
-    #     user.set_password(validated_data['password'])
-    #     user.save()
-    #     return user
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
@@ -102,7 +92,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def get_is_favorited(self, obj):
         """Проверка на добавление в избранное."""
-        request = self.context.get('request')
+        request = self.context['request']
         if request is None or request.user.is_anonymous:
             return False
         return Favorite.objects.filter(
@@ -111,7 +101,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def get_is_in_shopping_cart(self, obj):
         """Проверка на присутствие в корзине."""
-        request = self.context.get('request')
+        request = self.context['request']
         if request is None or request.user.is_anonymous:
             return False
         return ShoppingList.objects.filter(
@@ -136,8 +126,6 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
     ingredients = serializers.ListField(
         child=serializers.DictField(), write_only=True
     )
-    # ingredients = CreateRecipeIngredientsSerializer(
-    #     many=True, source='recipe_ingredients')
     tags = serializers.PrimaryKeyRelatedField(
         many=True, queryset=Tag.objects.all()
     )
@@ -149,33 +137,24 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
                   'image', 'text', 'cooking_time')
 
     def validate(self, data):
-        return unique_ingredients_validator(data)
-
-    # def create_ingredients(self, ingredients, recipe):
-    #     """Создание ингредиента."""
-    #     for element in ingredients:
-    #         id = element['id']
-    #         ingredient = Ingredient.objects.get(pk=id)
-    #         amount = element['amount']
-    #         RecipeIngredient.objects.create(
-    #             ingredient=ingredient, recipe=recipe, amount=amount
-    #         )
+        data = unique_ingredients_validator(data)
+        return ingredient_amount_validator(data)
 
     def create_ingredients(self, ingredients, recipe):
-        """Создание ингредиента."""
-        ingredient_list = []
+        """Создание ингредиентов."""
+        all_ingredients = []
         for ingredient in ingredients:
-            current_ingredient = get_object_or_404(Ingredient,
-                                                   id=ingredient.get('id'))
-            amount = ingredient.get('amount')
-            ingredient_list.append(
+            current_ingredient = get_object_or_404(
+                Ingredient, id=ingredient['id'])
+            amount = ingredient['amount']
+            all_ingredients.append(
                 RecipeIngredient(
                     recipe=recipe,
                     ingredient=current_ingredient,
                     amount=amount
                 )
             )
-        RecipeIngredient.objects.bulk_create(ingredient_list)
+        RecipeIngredient.objects.bulk_create(all_ingredients)
 
     def create_tags(self, tags, recipe):
         """Добавление тега."""
@@ -187,46 +166,29 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
 
-        user = self.context.get('request').user
+        user = self.context['request'].user
         recipe = Recipe.objects.create(**validated_data, author=user)
         self.create_ingredients(ingredients, recipe)
         self.create_tags(tags, recipe)
         return recipe
 
-    # @transaction.atomic
-    # def update(self, instance, validated_data):
-    #     """Обновление модели."""
-    #     RecipeIngredient.objects.filter(recipe=instance).delete()
-    #     RecipeTag.objects.filter(recipe=instance).delete()
-
-    #     self.create_ingredients(validated_data.pop('ingredients'), instance)
-    #     self.create_tags(validated_data.pop('tags'), instance)
-
-    #     return super().update(instance, validated_data)
-
     @transaction.atomic
     def update(self, instance, validated_data):
-        ingredients = validated_data.pop('ingredients')
-        tags = validated_data.pop('tags')
-        instance.name = validated_data.get('name', instance.name)
-        instance.text = validated_data.get('text', instance.text)
-        instance.cooking_time = validated_data.get(
-            'cooking_time', instance.cooking_time)
-        instance.image = validated_data.get('image', instance.image)
-        instance.save()
-        instance.tags.set(tags)
-        # self.update_ingredients(ingredients, instance)
+        """Обновление модели."""
         RecipeIngredient.objects.filter(recipe=instance).delete()
-        self.create_ingredients(ingredients, instance)
+        RecipeTag.objects.filter(recipe=instance).delete()
 
-        return instance
+        self.create_ingredients(validated_data.pop('ingredients'), instance)
+        self.create_tags(validated_data.pop('tags'), instance)
+
+        return super().update(instance, validated_data)
 
     def to_representation(self, instance):
         """Представление модели."""
         serializer = RecipeSerializer(
             instance,
             context={
-                'request': self.context.get('request')
+                'request': self.context['request']
             }
         )
         return serializer.data
@@ -257,9 +219,9 @@ class FollowSerializer(UserSerializer):
 
     def get_recipes(self, obj):
         """Получение рецептов."""
-        request = self.context.get('request')
+        request = self.context['request']
         recipes = obj.recipes.all()
-        recipes_limit = request.query_params.get('recipes_limit')
+        recipes_limit = request.query_params['recipes_limit']
         if recipes_limit:
             recipes = recipes[:int(recipes_limit)]
         return AnotherRecipeSerializer(recipes, many=True).data
@@ -281,7 +243,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
 
 class CurrentUserPhotoSerializer(serializers.ModelSerializer):
-    avatar = Base64ImageField(required=True)
+    avatar = Base64ImageField(required=False)
 
     class Meta:
         model = User

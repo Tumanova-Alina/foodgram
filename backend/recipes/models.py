@@ -1,7 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+
 from .validators import (
-    min_time_validator, ingredient_amount_validator, validate_username)
+    min_time_validator, validate_username)
 from api.constants import (
     MAX_LENGTH_USERNAME, MAX_LENGTH_FIRST_NAME,
     MAX_LENGTH_LAST_NAME, MAX_LENGTH_NAME,
@@ -222,7 +223,7 @@ class RecipeIngredient(models.Model):
         on_delete=models.CASCADE,
         related_name='recipe_ingredients', verbose_name='Рецепт')
     amount = models.PositiveSmallIntegerField(
-        validators=(ingredient_amount_validator,),
+        # validators=(ingredient_amount_validator,),
         verbose_name='Количество',
         blank=False,
     )

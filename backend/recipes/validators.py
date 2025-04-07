@@ -10,6 +10,8 @@ from api.constants import (
     MAX_INGREDIENT_AMOUNT_WARNING, MIN_INGREDIENT_AMOUNT_WARNING,
     UNIQUE_INGREDIENTS_WARNING, NOT_ALLOWED_SUMBOLS_IN_USERNAME
 )
+import logging
+logger = logging.getLogger(__name__)
 
 
 def min_time_validator(time):
@@ -21,13 +23,16 @@ def min_time_validator(time):
     return time
 
 
-def ingredient_amount_validator(amount):
+def ingredient_amount_validator(data):
     """Валидатор проверки количества ингредиента."""
-    if amount < MIN_INGREDIENT_AMOUNT:
-        raise ValidationError(MIN_INGREDIENT_AMOUNT_WARNING)
-    elif amount > MAX_INGREDIENT_AMOUNT:
-        raise ValidationError(MAX_INGREDIENT_AMOUNT_WARNING)
-    return amount
+    logger.error(f"Validating data: {data} of type {type(data)}")
+    for ingredient in data['ingredients']:
+        amount = int(ingredient['amount'])
+        if amount < MIN_INGREDIENT_AMOUNT:
+            raise ValidationError(MIN_INGREDIENT_AMOUNT_WARNING)
+        elif amount > MAX_INGREDIENT_AMOUNT:
+            raise ValidationError(MAX_INGREDIENT_AMOUNT_WARNING)
+    return data
 
 
 def validate_username(username):
@@ -43,7 +48,7 @@ def validate_username(username):
 
 def unique_ingredients_validator(data):
     """Валидатор уникальности ингредиентов."""
-    ingredients = data.get('ingredients')
+    ingredients = data['ingredients']
     unique_ingredients = []
 
     for ingredient in ingredients:

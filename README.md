@@ -132,7 +132,7 @@ ________________________________________________________________________________
  - Добавление ингредиентов в базу данных: Cкопируйте содержимое папки `data` на сервер. В папке есть файл ingredients.csv с ингредиентами для базы данных. Добавьте их в базу с помощью команды:
 
     ```bash
-    sudo docker compose -f docker-compose.production.yml exec backend python manage.py import_csv --path /data/ingredients.csv
+    sudo docker compose -f docker-compose.production.yml exec backend python manage.py import_csv data/ingredients.csv recipes Ingredient
     ```
 
  - На сервере открытие в редакторе nano конфига nginx:

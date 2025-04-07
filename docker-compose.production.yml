@@ -18,7 +18,7 @@ services:
     volumes:
       - static:/backend_static
       - media:/app/media
-      - data:/data
+      - ./data:/app/data
     depends_on:
       - db
   frontend:
@@ -33,7 +33,7 @@ services:
     image: alina124/foodgram_gateway
     env_file: .env
     ports:
-      - 8080:80 
+      - 8080:80
     volumes:
       - static:/static/
       - media:/media/
