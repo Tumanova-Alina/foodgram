@@ -5,35 +5,31 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.serializers import SetPasswordSerializer
+from recipes.models import (Favorite, Follow, Ingredient, Recipe,
+                            RecipeIngredient, ShoppingList, Tag, User)
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.permissions import (
-    AllowAny, IsAuthenticated
-)
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 from rest_framework.viewsets import ModelViewSet
 
-from recipes.models import (
-    Favorite, Follow, Ingredient, Recipe, RecipeIngredient,
-    ShoppingList, Tag, User
-)
-from .constants import (
-    ALREADY_SUBSCRIBED, CANT_SUBSCRIBE_TO_YOURSELF, HAVE_NO_SUBSCRIPTIONS,
-    NO_RECIPES_TO_GENERATE_SHOPPING_LIST, NOT_SUBSCRIBED,
-    RECIPE_ALREADY_EXISTS_IN_FAVORITES, RECIPE_ALREADY_EXISTS_IN_SHOPPING_LIST,
-    RECIPE_NOT_IN_FAVORITES, RECIPE_NOT_IN_SHOPPING_LIST,
-    SUCCESSFULLY_DELETED_SUBSCRIPTION, SUCCESSFULLY_SUBSCRIBED,
-    INVALID_PASSWORD, HAVE_NO_AVATAR, METHOD_NOT_ALLOWED
-)
+from .constants import (ALREADY_SUBSCRIBED, CANT_SUBSCRIBE_TO_YOURSELF,
+                        HAVE_NO_AVATAR, HAVE_NO_SUBSCRIPTIONS,
+                        INVALID_PASSWORD, METHOD_NOT_ALLOWED,
+                        NO_RECIPES_TO_GENERATE_SHOPPING_LIST, NOT_SUBSCRIBED,
+                        RECIPE_ALREADY_EXISTS_IN_FAVORITES,
+                        RECIPE_ALREADY_EXISTS_IN_SHOPPING_LIST,
+                        RECIPE_NOT_IN_FAVORITES, RECIPE_NOT_IN_SHOPPING_LIST,
+                        SUCCESSFULLY_DELETED_SUBSCRIPTION,
+                        SUCCESSFULLY_SUBSCRIBED)
 from .filters import IngredientFilter, RecipeFilter
 from .permissions import IsAdminAuthorOrReadOnly
-from .serializers import (
-    CreateRecipeSerializer, CreateUserSerializer, CurrentUserPhotoSerializer,
-    FollowSerializer, IngredientSerializer,
-    RecipeSerializer, TagSerializer, UserSerializer
-)
+from .serializers import (CreateRecipeSerializer, CreateUserSerializer,
+                          CurrentUserPhotoSerializer, FollowSerializer,
+                          IngredientSerializer, RecipeSerializer,
+                          TagSerializer, UserSerializer)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):

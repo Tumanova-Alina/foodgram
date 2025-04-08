@@ -1,15 +1,14 @@
 import re
 
+from api.constants import (MAX_COOKING_TIME, MAX_COOKING_TIME_WARNING,
+                           MAX_INGREDIENT_AMOUNT,
+                           MAX_INGREDIENT_AMOUNT_WARNING, MIN_COOKING_TIME,
+                           MIN_COOKING_TIME_WARNING, MIN_INGREDIENT_AMOUNT,
+                           MIN_INGREDIENT_AMOUNT_WARNING,
+                           NOT_ALLOWED_SUMBOLS_IN_USERNAME,
+                           UNIQUE_INGREDIENTS_WARNING, USERNAME_NOT_ALLOWED)
 from django.core.exceptions import ValidationError
-
 from foodgram_backend.settings import USER_PROFILE
-from api.constants import (
-    MIN_COOKING_TIME, MAX_COOKING_TIME,
-    MAX_COOKING_TIME_WARNING, MIN_COOKING_TIME_WARNING,
-    USERNAME_NOT_ALLOWED, MIN_INGREDIENT_AMOUNT, MAX_INGREDIENT_AMOUNT,
-    MAX_INGREDIENT_AMOUNT_WARNING, MIN_INGREDIENT_AMOUNT_WARNING,
-    UNIQUE_INGREDIENTS_WARNING, NOT_ALLOWED_SUMBOLS_IN_USERNAME
-)
 
 
 def min_time_validator(time):

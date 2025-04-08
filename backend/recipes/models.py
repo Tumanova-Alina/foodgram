@@ -1,15 +1,11 @@
+from api.constants import (MAX_COLOR_LENGTH, MAX_EMAIL_LENGTH,
+                           MAX_LENGTH_FIRST_NAME, MAX_LENGTH_LAST_NAME,
+                           MAX_LENGTH_NAME, MAX_LENGTH_SLUG,
+                           MAX_LENGTH_USERNAME, MAX_MEASUREMENT_UNIT_LENGTH)
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-from .validators import (
-    min_time_validator, validate_username)
-from api.constants import (
-    MAX_LENGTH_USERNAME, MAX_LENGTH_FIRST_NAME,
-    MAX_LENGTH_LAST_NAME, MAX_LENGTH_NAME,
-    MAX_LENGTH_SLUG, MAX_EMAIL_LENGTH,
-    MAX_COLOR_LENGTH, MAX_MEASUREMENT_UNIT_LENGTH
-)
-
+from .validators import min_time_validator, validate_username
 
 USER = 'user'
 ADMIN = 'admin'

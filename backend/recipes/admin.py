@@ -1,4 +1,5 @@
 from django.contrib.admin import ModelAdmin, TabularInline, register
+
 from .models import (Favorite, Follow, Ingredient, Recipe, RecipeIngredient,
                      ShoppingList, Tag, User)
 
