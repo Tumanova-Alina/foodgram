@@ -1,9 +1,11 @@
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 
-from djoser.serializers import UserSerializer as BaseUserSerializer
+from djoser.serializers import (
+    UserSerializer as BaseUserSerializer, UserCreateSerializer)
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
+from rest_framework.authtoken.models import Token
 
 from recipes.models import (
     Favorite, Follow, Ingredient, Recipe, RecipeIngredient,
@@ -16,6 +18,7 @@ from .utils import Base64ImageField, Hex2NameColor
 
 class TagSerializer(ModelSerializer):
     """Сериализатор тегов."""
+
     color = Hex2NameColor()
 
     class Meta:
@@ -38,8 +41,8 @@ class UserSerializer(BaseUserSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'first_name',
-                  'last_name', 'email', 'avatar', 'is_subscribed')
+        fields = ('email', 'id', 'username', 'first_name',
+                  'last_name', 'avatar', 'is_subscribed')
 
     def get_is_subscribed(self, obj):
         """Проверка подписки."""
@@ -49,15 +52,21 @@ class UserSerializer(BaseUserSerializer):
         return Follow.objects.filter(user=user, author=obj.id).exists()
 
 
-class CreateUserSerializer(UserSerializer):
+class CreateUserSerializer(UserCreateSerializer):
     """Сериализатор для создания пользователя.
 
-    Без проверки на подписку."""
+    Без проверки на подписку.
+    """
 
     class Meta:
         model = User
         fields = ('email', 'id', 'username', 'first_name',
                   'last_name', 'password')
+
+    def create(self, validated_data):
+        user = super().create(validated_data)
+        Token.objects.create(user=user)
+        return user
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):

@@ -28,7 +28,7 @@ from .constants import (
     INVALID_PASSWORD, HAVE_NO_AVATAR, METHOD_NOT_ALLOWED
 )
 from .filters import IngredientFilter, RecipeFilter
-from .permissions import IsAdminAuthorOrReadOnly, ReadOnly
+from .permissions import IsAdminAuthorOrReadOnly
 from .serializers import (
     CreateRecipeSerializer, CreateUserSerializer, CurrentUserPhotoSerializer,
     FollowSerializer, IngredientSerializer,
@@ -74,8 +74,7 @@ class UserViewSet(viewsets.ModelViewSet):
         detail=False,
         url_path='me',
         url_name='me',
-        # permission_classes=(IsAuthenticated,)
-        permission_classes=(AllowAny,)
+        permission_classes=(IsAuthenticated,)
     )
     def user_profile(self, request):
         """Профиль пользователя."""
@@ -244,9 +243,9 @@ class RecipeViewSet(ModelViewSet):
 
     @action(
         detail=True,
+        methods=('get',),
         url_path='get-link',
         url_name='get-link',
-        permission_classes=(IsAuthenticated,),
     )
     def get_link(self, request, pk=None):
         recipe = get_object_or_404(Recipe, id=pk)

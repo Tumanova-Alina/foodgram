@@ -10,8 +10,6 @@ from api.constants import (
     MAX_INGREDIENT_AMOUNT_WARNING, MIN_INGREDIENT_AMOUNT_WARNING,
     UNIQUE_INGREDIENTS_WARNING, NOT_ALLOWED_SUMBOLS_IN_USERNAME
 )
-import logging
-logger = logging.getLogger(__name__)
 
 
 def min_time_validator(time):
@@ -25,7 +23,6 @@ def min_time_validator(time):
 
 def ingredient_amount_validator(data):
     """Валидатор проверки количества ингредиента."""
-    logger.error(f"Validating data: {data} of type {type(data)}")
     for ingredient in data['ingredients']:
         amount = int(ingredient['amount'])
         if amount < MIN_INGREDIENT_AMOUNT:

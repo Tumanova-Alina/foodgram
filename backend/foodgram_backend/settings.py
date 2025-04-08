@@ -25,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY', get_random_secret_key())
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost').split(', ')
 
@@ -130,7 +130,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ru-RU'
 
 TIME_ZONE = 'UTC'
 
@@ -157,38 +157,22 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 USER_PROFILE = 'me'
 
-# DJOSER = {
-#     'LOGIN_FIELD': 'email',
-#     'HIDE_USERS': False,
-#     'PASSWORD_CHANGED_EMAIL_CONFIRMATION': False,
-#     'SERIALIZERS': {
-#         'user_create': 'api.serializers.CreateUserSerializer',
-#         'user': 'api.serializers.UserSerializer',
-#         'current_user': 'api.serializers.UserSerializer'
-#     },
-#     'PERMISSIONS': {
-#         'user_list': ['rest_framework.permissions.AllowAny'],
-#         'user': ['rest_framework.permissions.AllowAny'],
-#     },
-#     'TOKEN_MODEL': 'rest_framework.authtoken.models.Token',
-#     # 'USER_ID_FIELD': 'pk'
-# }
-
 DJOSER = {
     'LOGIN_FIELD': 'email',
+    'SERIALIZERS': {
+        'user_create': 'api.serializers.CreateUserSerializer',
+        'user': 'api.serializers.UserSerializer',
+    },
 }
-
-# CORS_URLS_REGEX = r'^/api/.*$'
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
 ]
 
-
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.IsAuthenticated',
     ],
 
     'DEFAULT_AUTHENTICATION_CLASSES': [
