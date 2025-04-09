@@ -43,6 +43,8 @@ ________________________________________________________________________________
    SECRET_KEY=django_settings_secret_key
    ALLOWED_HOSTS=127.0.0.1, localhost
    DB_ENGINE=PostgreSQL_или_другая_бд
+   FRONTEND_URL=https://yoursite.com
+   RECIPES_URL=путь_до_рецептов
     ```
 
  - Создание repository secrets в GitHub Actions:
