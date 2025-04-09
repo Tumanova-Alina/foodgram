@@ -12,4 +12,4 @@ pytest-pythonpath==0.7.3
 PyYAML==6.0
 python-dotenv==1.0.1
 django-filter==23.2
-django-cors-headers==4.5.0
+django-cors-headers==4.4.0
