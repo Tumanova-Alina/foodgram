@@ -2,15 +2,14 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer
 from djoser.serializers import UserSerializer as BaseUserSerializer
-from rest_framework import serializers
-from rest_framework.authtoken.models import Token
-from rest_framework.serializers import ModelSerializer
-
 from recipes.models import (Favorite, Follow, Ingredient, Recipe,
                             RecipeIngredient, RecipeTag, ShoppingList, Tag,
                             User)
 from recipes.validators import (ingredient_amount_validator,
                                 unique_ingredients_validator)
+from rest_framework import serializers
+from rest_framework.authtoken.models import Token
+from rest_framework.serializers import ModelSerializer
 
 from .utils import Base64ImageField, Hex2NameColor
 
