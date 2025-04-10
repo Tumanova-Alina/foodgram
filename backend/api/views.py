@@ -217,8 +217,9 @@ class RecipeViewSet(ModelViewSet):
         url_name='favorite',
     )
     def favorite(self, request, pk):
+        user = request.user
         recipe = get_object_or_404(Recipe, id=pk)
-        favorite = Favorite.objects.filter(recipe=recipe)
+        favorite = user.favorites.filter(recipe=recipe)
 
         if request.method == 'POST':
             if favorite.exists():
@@ -259,8 +260,9 @@ class RecipeViewSet(ModelViewSet):
     )
     def shopping_list(self, request, pk):
         """Управление списком покупок."""
+        user = request.user
         recipe = get_object_or_404(Recipe, id=pk)
-        shopping_item = ShoppingList.objects.filter(recipe=recipe)
+        shopping_item = user.shopping_list.filter(recipe=recipe)
 
         if request.method == 'POST':
             if shopping_item.exists():
