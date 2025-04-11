@@ -3,8 +3,7 @@ from django.db import transaction
 from djoser.serializers import UserCreateSerializer
 from djoser.serializers import UserSerializer as BaseUserSerializer
 from recipes.models import (Favorite, Follow, Ingredient, Recipe,
-                            RecipeIngredient, RecipeTag, ShoppingList, Tag,
-                            User)
+                            RecipeIngredient, ShoppingList, Tag, User)
 from recipes.validators import (ingredient_amount_validator,
                                 unique_ingredients_validator)
 from rest_framework import serializers
@@ -202,12 +201,21 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def update(self, instance, validated_data):
         """Обновление модели."""
-        RecipeIngredient.objects.filter(recipe=instance).delete()
-        RecipeTag.objects.filter(recipe=instance).delete()
+        # RecipeIngredient.objects.filter(recipe=instance).delete()
+        # RecipeTag.objects.filter(recipe=instance).delete()
 
+        # self.create_ingredients(validated_data.pop('ingredients'), instance)
+        # self.create_tags(validated_data.pop('tags'), instance)
+
+        # return super().update(instance, validated_data)
+        instance.ingredients.clear()
+        instance.tags.clear()
+
+        # Создаем новые ингредиенты и теги
         self.create_ingredients(validated_data.pop('ingredients'), instance)
         self.create_tags(validated_data.pop('tags'), instance)
 
+        # Обновляем остальные поля модели и возвращаем результат
         return super().update(instance, validated_data)
 
     def to_representation(self, instance):
@@ -233,9 +241,9 @@ class FollowSerializer(UserSerializer):
     """Сериализатор подписок."""
 
     recipes = serializers.SerializerMethodField(
-        read_only=True,
         method_name='get_recipes')
-    recipes_count = serializers.SerializerMethodField(
+    recipes_count = serializers.IntegerField(
+        source='recipes.count',
         read_only=True
     )
 
@@ -253,10 +261,10 @@ class FollowSerializer(UserSerializer):
             recipes = recipes[:int(recipes_limit)]
         return AnotherRecipeSerializer(recipes, many=True).data
 
-    @staticmethod
-    def get_recipes_count(obj):
-        """Получение количества рецептов."""
-        return obj.recipes.count()
+    # @staticmethod
+    # def get_recipes_count(obj):
+    #     """Получение количества рецептов."""
+    #     return obj.recipes.count()
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
