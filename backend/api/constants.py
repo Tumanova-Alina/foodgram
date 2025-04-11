@@ -1,4 +1,7 @@
-from foodgram_backend.settings import USER_PROFILE
+from django.conf import settings
+
+USER_PROFILE = settings.USER_PROFILE
+
 
 MAX_LENGTH_USERNAME = 150
 MAX_LENGTH_FIRST_NAME = 150

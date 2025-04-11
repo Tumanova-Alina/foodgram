@@ -21,7 +21,7 @@ class Command(BaseCommand):
         # Открыть и прочитать CSV файл
         with open(options['path'], newline='', encoding='utf-8') as csvfile:
             reader = csv.reader(csvfile)
-            headers = ['name', 'measurement_unit']
+            headers = ('name', 'measurement_unit')
             for row in reader:
                 filtered_data = dict(zip(headers, row))
                 # Фильтровать данные только по доступным полям модели
@@ -32,7 +32,7 @@ class Command(BaseCommand):
                 try:
                     # Создать объект модели
                     model.objects.create(**filtered_data)
-                except Exception as e:
-                    self.stderr.write(f'Ошибка при создании объекта: {e}')
+                except Exception as error:
+                    self.stderr.write(f'Ошибка при создании объекта: {error}')
 
         self.stdout.write(self.style.SUCCESS('Данные успешно импортированы!'))

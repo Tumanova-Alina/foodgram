@@ -1,5 +1,5 @@
 from django.db import transaction
-from django.shortcuts import get_object_or_404
+# from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer
 from djoser.serializers import UserSerializer as BaseUserSerializer
 from recipes.models import (Favorite, Follow, Ingredient, Recipe,
@@ -149,18 +149,38 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
 
     def create_ingredients(self, ingredients, recipe):
         """Создание ингредиентов."""
-        all_ingredients = []
-        for ingredient in ingredients:
-            current_ingredient = get_object_or_404(
-                Ingredient, id=ingredient['id'])
-            amount = ingredient['amount']
-            all_ingredients.append(
-                RecipeIngredient(
-                    recipe=recipe,
-                    ingredient=current_ingredient,
-                    amount=amount
-                )
+        # all_ingredients = []
+        # for ingredient in ingredients:
+        #     current_ingredient = get_object_or_404(
+        #         Ingredient, id=ingredient['id'])
+        #     amount = ingredient['amount']
+        #     all_ingredients.append(
+        #         RecipeIngredient(
+        #             recipe=recipe,
+        #             ingredient=current_ingredient,
+        #             amount=amount
+        #         )
+        #     )
+        # RecipeIngredient.objects.bulk_create(all_ingredients)
+        ingredient_ids = [
+            ingredient.get(
+                'id') for ingredient in ingredients if 'id' in ingredient]
+        existing_ingredients = Ingredient.objects.filter(id__in=ingredient_ids)
+
+        # Создаем словарь ингредиентов для удобного поиска.
+        ingredient_map = {
+            ingredient.id: ingredient for ingredient in existing_ingredients}
+
+        all_ingredients = [
+            RecipeIngredient(
+                recipe_id=recipe.id,  # используем PK вместо объекта.
+                ingredient_id=ingredient_id,
+                amount=ingredient.get('amount')
             )
+            for ingredient in ingredients
+            for ingredient_id in [ingredient.get('id')]
+            if ingredient_id in ingredient_map
+        ]
         RecipeIngredient.objects.bulk_create(all_ingredients)
 
     def create_tags(self, tags, recipe):
