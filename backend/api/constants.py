@@ -26,7 +26,7 @@ NOT_ALLOWED_SUMBOLS_IN_USERNAME = (
     'Разрешены только буквы, цифры и @/./+/-/_'
 )
 
-HAVE_NO_SUBSCRIPTIONS = {'У вас нет подписок'}
+HAVE_NO_SUBSCRIPTIONS = {}
 CANT_SUBSCRIBE_TO_YOURSELF = 'Нельзя подписаться на самого себя'
 ALREADY_SUBSCRIBED = 'Подписка на "{author}" уже существует'
 SUCCESSFULLY_SUBSCRIBED = 'Вы успешно подписались на пользователя "{author}"'

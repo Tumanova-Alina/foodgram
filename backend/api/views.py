@@ -16,7 +16,8 @@ from rest_framework.serializers import ValidationError
 from rest_framework.viewsets import ModelViewSet
 
 from .constants import (ALREADY_SUBSCRIBED, CANT_SUBSCRIBE_TO_YOURSELF,
-                        HAVE_NO_AVATAR, INVALID_PASSWORD, METHOD_NOT_ALLOWED,
+                        HAVE_NO_AVATAR, HAVE_NO_SUBSCRIPTIONS,
+                        INVALID_PASSWORD, METHOD_NOT_ALLOWED,
                         NO_RECIPES_TO_GENERATE_SHOPPING_LIST, NOT_SUBSCRIBED,
                         RECIPE_ALREADY_EXISTS_IN_FAVORITES,
                         RECIPE_ALREADY_EXISTS_IN_SHOPPING_LIST,
@@ -143,8 +144,8 @@ class UserViewSet(viewsets.ModelViewSet):
             serializer = FollowSerializer(pages, many=True,
                                           context={'request': request})
             return self.get_paginated_response(serializer.data)
-        return Response([],
-                        status=status.HTTP_200_OK)
+        return Response(HAVE_NO_SUBSCRIPTIONS,
+                        status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=True,
