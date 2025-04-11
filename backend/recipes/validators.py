@@ -7,15 +7,17 @@ from api.constants import (MAX_COOKING_TIME, MAX_COOKING_TIME_WARNING,
                            MIN_INGREDIENT_AMOUNT_WARNING,
                            NOT_ALLOWED_SUMBOLS_IN_USERNAME,
                            UNIQUE_INGREDIENTS_WARNING, USERNAME_NOT_ALLOWED)
+from django.conf import settings
 from django.core.exceptions import ValidationError
-from foodgram_backend.settings import USER_PROFILE
+
+USER_PROFILE = settings.USER_PROFILE
 
 
 def min_time_validator(time):
     """Валидатор проверки времени приготовления."""
     if time < MIN_COOKING_TIME:
         raise ValidationError(MIN_COOKING_TIME_WARNING)
-    elif time > MAX_COOKING_TIME:
+    if time > MAX_COOKING_TIME:
         raise ValidationError(MAX_COOKING_TIME_WARNING)
     return time
 
@@ -26,7 +28,7 @@ def ingredient_amount_validator(data):
         amount = int(ingredient['amount'])
         if amount < MIN_INGREDIENT_AMOUNT:
             raise ValidationError(MIN_INGREDIENT_AMOUNT_WARNING)
-        elif amount > MAX_INGREDIENT_AMOUNT:
+        if amount > MAX_INGREDIENT_AMOUNT:
             raise ValidationError(MAX_INGREDIENT_AMOUNT_WARNING)
     return data
 

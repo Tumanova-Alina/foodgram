@@ -8,9 +8,9 @@ class Command(BaseCommand):
     help = 'Импорт данных из CSV файла в модель'
 
     def add_arguments(self, parser):
-        parser.add_argument('path', type=str, help="Путь к CSV файлу")
-        parser.add_argument('app_name', type=str, help="Имя приложения")
-        parser.add_argument('model_name', type=str, help="Имя модели")
+        parser.add_argument('path', type=str, help='Путь к CSV файлу')
+        parser.add_argument('app_name', type=str, help='Имя приложения')
+        parser.add_argument('model_name', type=str, help='Имя модели')
 
     def handle(self, *args, **options):
         model = apps.get_model(options['app_name'], options['model_name'])

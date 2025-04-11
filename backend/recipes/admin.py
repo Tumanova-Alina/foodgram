@@ -38,24 +38,27 @@ class FollowAdmin(ModelAdmin):
     empty_value_display = 'Пусто'
 
 
-@register(Favorite)
-class FavoriteAdmin(ModelAdmin):
+class FavoriteShoppingListBaseAdmin(ModelAdmin):
     list_display = ('id', 'user', 'recipe',)
     list_filter = ('user', 'recipe')
     empty_value_display = 'Пусто'
+
+
+@register(Favorite)
+class FavoriteAdmin(FavoriteShoppingListBaseAdmin):
+    pass
 
 
 @register(ShoppingList)
-class ShoppingListAdmin(ModelAdmin):
-    list_display = ('id', 'user', 'recipe',)
-    list_filter = ('user', 'recipe')
-    empty_value_display = 'Пусто'
+class ShoppingListAdmin(FavoriteShoppingListBaseAdmin):
+    pass
 
 
 @register(Ingredient)
 class IngredientAdmin(ModelAdmin):
     list_display = ('id', 'name', 'measurement_unit',)
     list_filter = ('name',)
+    search_fields = ('name', 'measurement_unit',)
     empty_value_display = 'Пусто'
 
 
