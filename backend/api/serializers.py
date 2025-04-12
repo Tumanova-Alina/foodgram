@@ -8,9 +8,10 @@ from recipes.validators import (ingredient_amount_validator,
                                 unique_ingredients_validator)
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
-from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import ModelSerializer, ValidationError
 
-from .utils import Base64ImageField, Hex2NameColor
+from .constants import INVALID_PASSWORD
+from .serializers_fields import Base64ImageField, Hex2NameColor
 
 
 class TagSerializer(ModelSerializer):
@@ -64,6 +65,17 @@ class CreateUserSerializer(UserCreateSerializer):
         user = super().create(validated_data)
         Token.objects.create(user=user)
         return user
+
+
+class SetPasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True)
+
+    def validate_current_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise ValidationError(INVALID_PASSWORD)
+        return value
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
