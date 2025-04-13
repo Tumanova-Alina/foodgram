@@ -107,39 +107,6 @@ class UserViewSet(viewsets.ModelViewSet):
         )
 
     # @action(
-    #     detail=False,
-    #     methods=('put',),
-    #     url_path='me/avatar',
-    #     url_name='me/avatar-update',
-    #     permission_classes=(IsAuthenticated,)
-    # )
-    # def update_avatar(self, request):
-    #     """Обновление аватара пользователя."""
-    #     user = request.user
-    #     serializer = CurrentUserPhotoSerializer(
-    #         user, data=request.data, partial=True)
-    #     serializer.is_valid(raise_exception=True)
-    #     serializer.save()
-    #     return Response(
-    #         {'avatar': request.build_absolute_uri(user.avatar.url)})
-
-    # @action(
-    #     detail=False,
-    #     methods=('delete',),
-    #     url_path='me/avatar',
-    #     url_name='me/avatar-delete',
-    #     permission_classes=(IsAuthenticated,)
-    # )
-    # def delete_avatar(self, request):
-    #     """Удаление аватара пользователя."""
-    #     user = request.user
-    #     if not user.avatar:
-    #         raise NotFound(HAVE_NO_AVATAR)
-
-    #     user.avatar.delete()
-    #     return Response(status=status.HTTP_204_NO_CONTENT)
-
-    # @action(
     #     methods=('post',),
     #     detail=False,
     #     url_path='set_password',
@@ -168,7 +135,8 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def set_password(self, request, *args, **kwargs):
         """Изменение пароля."""
-        serializer = SetPasswordSerializer(data=request.data)
+        serializer = SetPasswordSerializer(
+            data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
 
         self.request.user.set_password(
