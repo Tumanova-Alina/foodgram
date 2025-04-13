@@ -5,8 +5,8 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.serializers import SetPasswordSerializer
-from recipes.models import (Favorite, Follow, Ingredient, Recipe,
-                            RecipeIngredient, ShoppingList, Tag, User)
+from recipes.models import (Follow, Ingredient, Recipe, RecipeIngredient,
+                            ShoppingList, Tag, User)
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
@@ -307,8 +307,13 @@ class RecipeViewSet(ModelViewSet):
                 return Response(
                     {'error': RECIPE_ALREADY_EXISTS_IN_FAVORITES.format(
                         recipe=recipe)}, status=status.HTTP_400_BAD_REQUEST)
-            Favorite.objects.create(user=request.user, recipe=recipe)
-            serializer = RecipeSerializer(recipe, context={'request': request})
+            # Favorite.objects.create(user=request.user, recipe=recipe)
+            # serializer = RecipeSerializer(
+            # recipe, context={'request': request})
+            serializer = RecipeSerializer(
+                data={'user': user.id, 'recipe': recipe.id})
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         elif request.method == 'DELETE':
