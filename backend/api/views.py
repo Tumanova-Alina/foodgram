@@ -13,11 +13,11 @@ from rest_framework.exceptions import NotFound
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.serializers import ValidationError
+# from rest_framework.serializers import ValidationError
 from rest_framework.viewsets import ModelViewSet
 
 from .constants import (ALREADY_SUBSCRIBED, CANT_SUBSCRIBE_TO_YOURSELF,
-                        HAVE_NO_AVATAR, INVALID_PASSWORD,
+                        HAVE_NO_AVATAR, METHOD_NOT_ALLOWED,
                         NO_RECIPES_TO_GENERATE_SHOPPING_LIST, NOT_SUBSCRIBED,
                         RECIPE_ALREADY_EXISTS_IN_FAVORITES,
                         RECIPE_ALREADY_EXISTS_IN_SHOPPING_LIST,
@@ -77,70 +77,67 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @action(
+        detail=False,
+        methods=('put', 'delete'),
+        url_path='me/avatar',
+        url_name='me/avatar',
+        permission_classes=(IsAuthenticated,)
+    )
+    def avatar(self, request):
+        """Добавление/удаление аватара."""
+        user = request.user
+        if request.method == 'PUT':
+            serializer = CurrentUserPhotoSerializer(
+                user, data=request.data, partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(
+                {'avatar': request.build_absolute_uri(user.avatar.url)}
+            )
+        elif request.method == 'DELETE':
+            if user.avatar:
+                user.avatar.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            raise NotFound(HAVE_NO_AVATAR)
+        return Response(
+            {'detail': METHOD_NOT_ALLOWED},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED
+        )
+
     # @action(
     #     detail=False,
-    #     methods=('put', 'delete'),
+    #     methods=('put',),
     #     url_path='me/avatar',
-    #     url_name='me/avatar',
+    #     url_name='me/avatar-update',
     #     permission_classes=(IsAuthenticated,)
     # )
-    # def avatar(self, request):
-    #     """Добавление/удаление аватара."""
+    # def update_avatar(self, request):
+    #     """Обновление аватара пользователя."""
     #     user = request.user
-    #     if request.method == 'PUT':
-    #         serializer = CurrentUserPhotoSerializer(
-    #             user, data=request.data, partial=True
-    #         )
-    #         serializer.is_valid(raise_exception=True)
-    #         serializer.save()
-    #         return Response(
-    #             {'avatar': request.build_absolute_uri(user.avatar.url)},
-    #             status=status.HTTP_200_OK
-    #         )
-    #     elif request.method == 'DELETE':
-    #         if user.avatar:
-    #             user.avatar.delete()
-    #             return Response(status=status.HTTP_204_NO_CONTENT)
-    #         return Response(
-    #             {'detail': HAVE_NO_AVATAR},
-    #             status=status.HTTP_400_BAD_REQUEST)
+    #     serializer = CurrentUserPhotoSerializer(
+    #         user, data=request.data, partial=True)
+    #     serializer.is_valid(raise_exception=True)
+    #     serializer.save()
     #     return Response(
-    #         {'detail': METHOD_NOT_ALLOWED},
-    #         status=status.HTTP_405_METHOD_NOT_ALLOWED
-    #     )
+    #         {'avatar': request.build_absolute_uri(user.avatar.url)})
 
-    @action(
-        detail=False,
-        methods=('put',),
-        url_path='me/avatar',
-        url_name='me/avatar-update',
-        permission_classes=(IsAuthenticated,)
-    )
-    def update_avatar(self, request):
-        """Обновление аватара пользователя."""
-        user = request.user
-        serializer = CurrentUserPhotoSerializer(
-            user, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(
-            {'avatar': request.build_absolute_uri(user.avatar.url)})
+    # @action(
+    #     detail=False,
+    #     methods=('delete',),
+    #     url_path='me/avatar',
+    #     url_name='me/avatar-delete',
+    #     permission_classes=(IsAuthenticated,)
+    # )
+    # def delete_avatar(self, request):
+    #     """Удаление аватара пользователя."""
+    #     user = request.user
+    #     if not user.avatar:
+    #         raise NotFound(HAVE_NO_AVATAR)
 
-    @action(
-        detail=False,
-        methods=('delete',),
-        url_path='me/avatar',
-        url_name='me/avatar-delete',
-        permission_classes=(IsAuthenticated,)
-    )
-    def delete_avatar(self, request):
-        """Удаление аватара пользователя."""
-        user = request.user
-        if not user.avatar:
-            raise NotFound(HAVE_NO_AVATAR)
-
-        user.avatar.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    #     user.avatar.delete()
+    #     return Response(status=status.HTTP_204_NO_CONTENT)
 
     # @action(
     #     methods=('post',),
@@ -173,10 +170,6 @@ class UserViewSet(viewsets.ModelViewSet):
         """Изменение пароля."""
         serializer = SetPasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
-        current_password = serializer.validated_data['current_password']
-        if not self.request.user.check_password(current_password):
-            raise ValidationError(INVALID_PASSWORD)
 
         self.request.user.set_password(
             serializer.validated_data['new_password'])

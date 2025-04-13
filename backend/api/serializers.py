@@ -77,6 +77,12 @@ class SetPasswordSerializer(serializers.Serializer):
             raise ValidationError(INVALID_PASSWORD)
         return value
 
+    def validate(self, data):
+        if data['current_password'] == data['new_password']:
+            raise ValidationError(
+                'Новый пароль не должен совпадать с текущим.')
+        return data
+
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
     """Сериализатор ингредиентов в рецепте."""
