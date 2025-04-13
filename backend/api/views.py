@@ -113,7 +113,8 @@ class UserViewSet(viewsets.ModelViewSet):
         detail=False,
         methods=('put',),
         url_path='me/avatar',
-        url_name='me/avatar-update'
+        url_name='me/avatar-update',
+        permission_classes=(IsAuthenticated,)
     )
     def update_avatar(self, request):
         """Обновление аватара пользователя."""
@@ -129,7 +130,8 @@ class UserViewSet(viewsets.ModelViewSet):
         detail=False,
         methods=('delete',),
         url_path='me/avatar',
-        url_name='me/avatar-delete'
+        url_name='me/avatar-delete',
+        permission_classes=(IsAuthenticated,)
     )
     def delete_avatar(self, request):
         """Удаление аватара пользователя."""
@@ -164,7 +166,8 @@ class UserViewSet(viewsets.ModelViewSet):
         methods=('post',),
         detail=False,
         url_path='set_password',
-        url_name='set_password'
+        url_name='set_password',
+        permission_classes=(IsAuthenticated,)
     )
     def set_password(self, request, *args, **kwargs):
         """Изменение пароля."""
