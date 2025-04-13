@@ -178,7 +178,7 @@ class UserViewSet(viewsets.ModelViewSet):
     #                     status=status.HTTP_400_BAD_REQUEST)
     def subscriptions(self, request):
         """Создание страницы подписок."""
-        queryset = request.user.following.all()
+        queryset = request.user.following_users.all()
 
         pages = self.paginate_queryset(queryset)
         context = self.get_serializer_context()
@@ -205,7 +205,7 @@ class UserViewSet(viewsets.ModelViewSet):
                     CANT_SUBSCRIBE_TO_YOURSELF,
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            if user.following.filter(author=author).exists():
+            if user.following_users.filter(author=author).exists():
                 return Response(
                     ALREADY_SUBSCRIBED.format(author=author),
                     status=status.HTTP_400_BAD_REQUEST
@@ -217,7 +217,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_201_CREATED
             )
 
-        deleted, _ = user.following.filter(author=author).delete()
+        deleted, _ = user.following_users.filter(author=author).delete()
         if deleted:
             return Response(
                 SUCCESSFULLY_DELETED_SUBSCRIPTION.format(author=author),
