@@ -124,13 +124,13 @@ class UserViewSet(viewsets.ModelViewSet):
         self.request.user.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    # @action(
-    #     detail=False,
-    #     methods=('get',),
-    #     permission_classes=(IsAuthenticated,),
-    #     url_path='subscriptions',
-    #     url_name='subscriptions',
-    # )
+    @action(
+        detail=False,
+        methods=('get',),
+        permission_classes=(IsAuthenticated,),
+        url_path='subscriptions',
+        url_name='subscriptions',
+    )
     # def subscriptions(self, request):
     #     """Создание страницы подписок."""
     #     queryset = User.objects.filter(following__user=self.request.user)
@@ -141,7 +141,6 @@ class UserViewSet(viewsets.ModelViewSet):
     #     return self.get_paginated_response(serializer.data)
     #     # return Response(HAVE_NO_SUBSCRIPTIONS,
     #     #                 status=status.HTTP_204_NO_CONTENT)
-
     # @action(
     #     detail=True,
     #     methods=('post', 'delete'),
@@ -177,7 +176,6 @@ class UserViewSet(viewsets.ModelViewSet):
     #             status=status.HTTP_204_NO_CONTENT)
     #     return Response(NOT_SUBSCRIBED,
     #                     status=status.HTTP_400_BAD_REQUEST)
-
     def subscriptions(self, request):
         """Создание страницы подписок."""
         queryset = request.user.following.all()
