@@ -126,7 +126,6 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=False,
-        methods=('get',),
         permission_classes=(IsAuthenticated,),
         url_path='subscriptions',
         url_name='subscriptions',
@@ -178,12 +177,52 @@ class UserViewSet(viewsets.ModelViewSet):
     #                     status=status.HTTP_400_BAD_REQUEST)
     def subscriptions(self, request):
         """Создание страницы подписок."""
-        queryset = request.user.following_users.all()
+        queryset = User.objects.filter(following__user=self.request.user)
 
         pages = self.paginate_queryset(queryset)
         context = self.get_serializer_context()
         serializer = FollowSerializer(pages, many=True, context=context)
         return self.get_paginated_response(serializer.data)
+
+    # @action(
+    #     detail=True,
+    #     methods=('post', 'delete'),
+    #     permission_classes=(IsAuthenticated,),
+    #     url_path='subscribe',
+    #     url_name='subscribe',
+    # )
+    # def subscribe(self, request, pk):
+    #     """Управление подписками."""
+    #     user = request.user
+    #     self.lookup_url_kwarg = 'pk'
+    #     self.lookup_field = 'id'
+    #     author = self.get_object()
+
+    #     if request.method == 'POST':
+    #         if user == author:
+    #             return Response(
+    #                 CANT_SUBSCRIBE_TO_YOURSELF,
+    #                 status=status.HTTP_400_BAD_REQUEST
+    #             )
+    #         if user.following.filter(author=author).exists():
+    #             return Response(
+    #                 ALREADY_SUBSCRIBED.format(author=author),
+    #                 status=status.HTTP_400_BAD_REQUEST
+    #             )
+
+    #         Follow.objects.create(user=user, author=author)
+    #         return Response(
+    #             SUCCESSFULLY_SUBSCRIBED.format(author=author),
+    #             status=status.HTTP_201_CREATED
+    #         )
+
+    #     deleted, _ = user.following.filter(author=author).delete()
+    #     if deleted:
+    #         return Response(
+    #             SUCCESSFULLY_DELETED_SUBSCRIPTION.format(author=author),
+    #             status=status.HTTP_204_NO_CONTENT
+    #         )
+    #     return Response(NOT_SUBSCRIBED, status=status.HTTP_400_BAD_REQUEST)
 
     @action(
         detail=True,
@@ -205,7 +244,7 @@ class UserViewSet(viewsets.ModelViewSet):
                     CANT_SUBSCRIBE_TO_YOURSELF,
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            if user.following_users.filter(author=author).exists():
+            if Follow.objects.filter(user=user, author=author).exists():
                 return Response(
                     ALREADY_SUBSCRIBED.format(author=author),
                     status=status.HTTP_400_BAD_REQUEST
@@ -217,7 +256,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_201_CREATED
             )
 
-        deleted, _ = user.following_users.filter(author=author).delete()
+        deleted, _ = Follow.objects.filter(user=user, author=author).delete()
         if deleted:
             return Response(
                 SUCCESSFULLY_DELETED_SUBSCRIPTION.format(author=author),
