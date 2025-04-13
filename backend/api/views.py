@@ -1,3 +1,4 @@
+import itertools
 import os
 
 from django.db.models import Sum
@@ -307,9 +308,6 @@ class RecipeViewSet(ModelViewSet):
                 return Response(
                     {'error': RECIPE_ALREADY_EXISTS_IN_FAVORITES.format(
                         recipe=recipe)}, status=status.HTTP_400_BAD_REQUEST)
-            # Favorite.objects.create(user=request.user, recipe=recipe)
-            # serializer = RecipeSerializer(
-            # recipe, context={'request': request})
             serializer = RecipeSerializer(
                 data={'user': user.id, 'recipe': recipe.id})
             serializer.is_valid(raise_exception=True)
@@ -369,17 +367,35 @@ class RecipeViewSet(ModelViewSet):
             shopping_item.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
+    # @staticmethod
+    # def get_shopping_list(ingredients):
+    #     """Создание списка для загрузки."""
+    #     shopping_list = ["Список покупок:"]
+    #     for ingredient in ingredients:
+    #         shopping_list.append(
+    #             f"{ingredient['ingredient__name']} - "
+    #             f"{ingredient['total']}"
+    #             f"({ingredient['ingredient__measurement_unit']})\n"
+    #         )
+    #     return "\n".join(shopping_list)
     @staticmethod
     def get_shopping_list(ingredients):
         """Создание списка для загрузки."""
-        shopping_list = ["Список покупок:"]
-        for ingredient in ingredients:
-            shopping_list.append(
-                f"{ingredient['ingredient__name']} - "
-                f"{ingredient['total']}"
-                f"({ingredient['ingredient__measurement_unit']})\n"
+        shopping_list_header = ("Список покупок:\n",)
+
+        try:
+            shopping_list_body = (
+                f"{ingredient.get('ingredient__name', 'Не указано')} - "
+                f"{ingredient.get('total', 'Не указано')} "
+                f"({ingredient.get('ingredient__measurement_unit', '')})"
+                for ingredient in ingredients
             )
-        return "\n".join(shopping_list)
+        except (TypeError, AttributeError) as error:
+            raise ValueError(
+                "Неожиданный формат данных для ингредиентов.") from error
+
+        return "".join(
+            itertools.chain(shopping_list_header, shopping_list_body))
 
     @action(
         detail=False,
