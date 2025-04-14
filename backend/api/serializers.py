@@ -1,5 +1,4 @@
 from django.db import transaction
-# from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer
 from djoser.serializers import UserSerializer as BaseUserSerializer
 from recipes.models import (Favorite, Follow, Ingredient, Recipe,
@@ -166,31 +165,16 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
 
     def create_ingredients(self, ingredients, recipe):
         """Создание ингредиентов."""
-        # all_ingredients = []
-        # for ingredient in ingredients:
-        #     current_ingredient = get_object_or_404(
-        #         Ingredient, id=ingredient['id'])
-        #     amount = ingredient['amount']
-        #     all_ingredients.append(
-        #         RecipeIngredient(
-        #             recipe=recipe,
-        #             ingredient=current_ingredient,
-        #             amount=amount
-        #         )
-        #     )
-        # RecipeIngredient.objects.bulk_create(all_ingredients)
         ingredient_ids = [
             ingredient.get(
                 'id') for ingredient in ingredients if 'id' in ingredient]
         existing_ingredients = Ingredient.objects.filter(id__in=ingredient_ids)
-
-        # Создаем словарь ингредиентов для удобного поиска.
         ingredient_map = {
             ingredient.id: ingredient for ingredient in existing_ingredients}
 
         all_ingredients = [
             RecipeIngredient(
-                recipe_id=recipe.id,  # используем PK вместо объекта.
+                recipe_id=recipe.id,
                 ingredient_id=ingredient_id,
                 amount=ingredient.get('amount')
             )
@@ -219,21 +203,11 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def update(self, instance, validated_data):
         """Обновление модели."""
-        # RecipeIngredient.objects.filter(recipe=instance).delete()
-        # RecipeTag.objects.filter(recipe=instance).delete()
-
-        # self.create_ingredients(validated_data.pop('ingredients'), instance)
-        # self.create_tags(validated_data.pop('tags'), instance)
-
-        # return super().update(instance, validated_data)
         instance.ingredients.clear()
         instance.tags.clear()
 
-        # Создаем новые ингредиенты и теги
         self.create_ingredients(validated_data.pop('ingredients'), instance)
         self.create_tags(validated_data.pop('tags'), instance)
-
-        # Обновляем остальные поля модели и возвращаем результат
         return super().update(instance, validated_data)
 
     def to_representation(self, instance):
@@ -278,11 +252,6 @@ class FollowSerializer(UserSerializer):
         if recipes_limit:
             recipes = recipes[:int(recipes_limit)]
         return AnotherRecipeSerializer(recipes, many=True).data
-
-    # @staticmethod
-    # def get_recipes_count(obj):
-    #     """Получение количества рецептов."""
-    #     return obj.recipes.count()
 
 
 class FavoriteSerializer(serializers.ModelSerializer):

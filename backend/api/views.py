@@ -131,23 +131,13 @@ class UserViewSet(viewsets.ModelViewSet):
         url_path='subscriptions',
         url_name='subscriptions',
     )
-    # def subscriptions(self, request):
-    #     """Создание страницы подписок."""
-    #     queryset = request.user.following.all()
-    #     pages = self.paginate_queryset(queryset)
-    #     context = self.get_serializer_context()
-    #     serializer = FollowSerializer(pages, many=True, context=context)
-    #     return self.get_paginated_response(serializer.data)
     def subscriptions(self, request):
         """Создание страницы подписок."""
-        queryset = User.objects.filter(following__user=self.request.user)
-        # if queryset:
+        queryset = request.user.following.all()
         pages = self.paginate_queryset(queryset)
-        serializer = FollowSerializer(pages, many=True,
-                                      context={'request': request})
+        context = self.get_serializer_context()
+        serializer = FollowSerializer(pages, many=True, context=context)
         return self.get_paginated_response(serializer.data)
-        # return Response(HAVE_NO_SUBSCRIPTIONS,
-        #                 status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=True,
@@ -159,111 +149,35 @@ class UserViewSet(viewsets.ModelViewSet):
     def subscribe(self, request, pk):
         """Управление подписками."""
         user = request.user
-        author = get_object_or_404(User, id=pk)
-        change_subscription_status = Follow.objects.filter(
-            user=user.id, author=author.id
-        )
+        self.lookup_url_kwarg = 'pk'
+        self.lookup_field = 'id'
+        author = self.get_object()
+
         if request.method == 'POST':
             if user == author:
-                return Response(CANT_SUBSCRIBE_TO_YOURSELF,
-                                status=status.HTTP_400_BAD_REQUEST)
-            if change_subscription_status.exists():
-                return Response(ALREADY_SUBSCRIBED.format(author=author),
-                                status=status.HTTP_400_BAD_REQUEST)
-            subscribe = Follow.objects.create(
-                user=user,
-                author=author
+                return Response(
+                    CANT_SUBSCRIBE_TO_YOURSELF,
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if user.following.filter(author=author).exists():
+                return Response(
+                    ALREADY_SUBSCRIBED.format(author=author),
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            Follow.objects.create(user=user, author=author)
+            return Response(
+                SUCCESSFULLY_SUBSCRIBED.format(author=author),
+                status=status.HTTP_201_CREATED
             )
-            subscribe.save()
-            return Response(SUCCESSFULLY_SUBSCRIBED.format(author=author),
-                            status=status.HTTP_201_CREATED)
-        if change_subscription_status.exists():
-            change_subscription_status.delete()
+
+        deleted, _ = user.following.filter(author=author).delete()
+        if deleted:
             return Response(
                 SUCCESSFULLY_DELETED_SUBSCRIPTION.format(author=author),
-                status=status.HTTP_204_NO_CONTENT)
-        return Response(NOT_SUBSCRIBED,
-                        status=status.HTTP_400_BAD_REQUEST)
-
-    # @action(
-    #     detail=True,
-    #     methods=('post', 'delete'),
-    #     permission_classes=(IsAuthenticated,),
-    #     url_path='subscribe',
-    #     url_name='subscribe',
-    # )
-    # def subscribe(self, request, pk):
-    #     """Управление подписками."""
-    #     user = request.user
-    #     self.lookup_url_kwarg = 'pk'
-    #     self.lookup_field = 'id'
-    #     author = self.get_object()
-
-    #     if request.method == 'POST':
-    #         if user == author:
-    #             return Response(
-    #                 CANT_SUBSCRIBE_TO_YOURSELF,
-    #                 status=status.HTTP_400_BAD_REQUEST
-    #             )
-    #         if user.following.filter(author=author).exists():
-    #             return Response(
-    #                 ALREADY_SUBSCRIBED.format(author=author),
-    #                 status=status.HTTP_400_BAD_REQUEST
-    #             )
-
-    #         Follow.objects.create(user=user, author=author)
-    #         return Response(
-    #             SUCCESSFULLY_SUBSCRIBED.format(author=author),
-    #             status=status.HTTP_201_CREATED
-    #         )
-
-    #     deleted, _ = user.following.filter(author=author).delete()
-    #     if deleted:
-    #         return Response(
-    #             SUCCESSFULLY_DELETED_SUBSCRIPTION.format(author=author),
-    #             status=status.HTTP_204_NO_CONTENT
-    #         )
-    #     return Response(NOT_SUBSCRIBED, status=status.HTTP_400_BAD_REQUEST)
-
-    # @action(
-    #     detail=True,
-    #     methods=('post', 'delete'),
-    #     permission_classes=(IsAuthenticated,),
-    #     url_path='subscribe',
-    #     url_name='subscribe',
-    # )
-    # def subscribe(self, request, pk):
-    #     """Управление подписками."""
-    #     user = request.user
-    #     self.lookup_url_kwarg = 'pk'
-    #     self.lookup_field = 'id'
-    #     author = self.get_object()
-
-    #     if request.method == 'POST':
-    #         if user == author:
-    #             return Response(
-    #                 CANT_SUBSCRIBE_TO_YOURSELF,
-    #                 status=status.HTTP_400_BAD_REQUEST
-    #             )
-    #         if Follow.objects.filter(user=user, author=author).exists():
-    #             return Response(
-    #                 ALREADY_SUBSCRIBED.format(author=author),
-    #                 status=status.HTTP_400_BAD_REQUEST
-    #             )
-
-    #         Follow.objects.create(user=user, author=author)
-    #         return Response(
-    #             SUCCESSFULLY_SUBSCRIBED.format(author=author),
-    #             status=status.HTTP_201_CREATED
-    #         )
-
-    #     deleted, _ = Follow.objects.filter(user=user, author=author).delete()
-    #     if deleted:
-    #         return Response(
-    #             SUCCESSFULLY_DELETED_SUBSCRIPTION.format(author=author),
-    #             status=status.HTTP_204_NO_CONTENT
-    #         )
-    #     return Response(NOT_SUBSCRIBED, status=status.HTTP_400_BAD_REQUEST)
+                status=status.HTTP_204_NO_CONTENT
+            )
+        return Response(NOT_SUBSCRIBED, status=status.HTTP_400_BAD_REQUEST)
 
 
 class RecipeViewSet(ModelViewSet):
