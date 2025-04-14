@@ -261,14 +261,14 @@ class FollowSerializer(UserSerializer):
     recipes = serializers.SerializerMethodField(
         method_name='get_recipes')
     recipes_count = serializers.IntegerField(
-        # source='recipes.count',
+        source='recipes.count',
         read_only=True
     )
 
     class Meta:
         model = User
         fields = ('id', 'username', 'email', 'first_name', 'last_name',
-                  'is_subscribed', 'recipes', 'recipes_count',)
+                  'avatar', 'is_subscribed', 'recipes', 'recipes_count',)
 
     def get_recipes(self, obj):
         """Получение рецептов."""
@@ -279,10 +279,10 @@ class FollowSerializer(UserSerializer):
             recipes = recipes[:int(recipes_limit)]
         return AnotherRecipeSerializer(recipes, many=True).data
 
-    @staticmethod
-    def get_recipes_count(obj):
-        """Получение количества рецептов."""
-        return obj.recipes.count()
+    # @staticmethod
+    # def get_recipes_count(obj):
+    #     """Получение количества рецептов."""
+    #     return obj.recipes.count()
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
