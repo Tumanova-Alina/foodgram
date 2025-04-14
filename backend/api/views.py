@@ -181,8 +181,9 @@ class UserViewSet(viewsets.ModelViewSet):
         queryset = request.user.following.all()
 
         pages = self.paginate_queryset(queryset)
-        context = self.get_serializer_context()
-        serializer = FollowSerializer(pages, many=True, context=context)
+        # context = self.get_serializer_context()
+        serializer = FollowSerializer(
+            pages, many=True, context={'request': request})
         return self.get_paginated_response(serializer.data)
 
     @action(
