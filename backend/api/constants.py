@@ -47,3 +47,4 @@ NO_RECIPES_TO_GENERATE_SHOPPING_LIST = (
 INVALID_PASSWORD = 'Неправильный пароль'
 HAVE_NO_AVATAR = 'Аватар не установлен.'
 METHOD_NOT_ALLOWED = 'Этот метод запрещен.'
+UNEXPECTED_FORMAT_OF_DATA = 'Неожиданный формат данных для ингредиентов.'
