@@ -131,6 +131,15 @@ class UserViewSet(viewsets.ModelViewSet):
         url_path='subscriptions',
         url_name='subscriptions',
     )
+    def subscriptions(self, request):
+        """Создание страницы подписок."""
+        queryset = request.user.following.all()
+
+        pages = self.paginate_queryset(queryset)
+        context = self.get_serializer_context()
+        serializer = FollowSerializer(pages, many=True, context=context)
+        return self.get_paginated_response(serializer.data)
+
     # def subscriptions(self, request):
     #     """Создание страницы подписок."""
     #     queryset = User.objects.filter(following__user=self.request.user)
@@ -176,15 +185,6 @@ class UserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_204_NO_CONTENT)
         return Response(NOT_SUBSCRIBED,
                         status=status.HTTP_400_BAD_REQUEST)
-
-    def subscriptions(self, request):
-        """Создание страницы подписок."""
-        queryset = request.user.following.all()
-
-        pages = self.paginate_queryset(queryset)
-        context = self.get_serializer_context()
-        serializer = FollowSerializer(pages, many=True, context=context)
-        return self.get_paginated_response(serializer.data)
 
     # @action(
     #     detail=True,
