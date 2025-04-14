@@ -131,25 +131,24 @@ class UserViewSet(viewsets.ModelViewSet):
         url_path='subscriptions',
         url_name='subscriptions',
     )
-    def subscriptions(self, request):
-        """Создание страницы подписок."""
-        queryset = request.user.following.all()
-
-        pages = self.paginate_queryset(queryset)
-        context = self.get_serializer_context()
-        serializer = FollowSerializer(pages, many=True, context=context)
-        return self.get_paginated_response(serializer.data)
-
     # def subscriptions(self, request):
     #     """Создание страницы подписок."""
-    #     queryset = User.objects.filter(following__user=self.request.user)
-    #     # if queryset:
+    #     queryset = request.user.following.all()
     #     pages = self.paginate_queryset(queryset)
-    #     serializer = FollowSerializer(pages, many=True,
-    #                                   context={'request': request})
+    #     context = self.get_serializer_context()
+    #     serializer = FollowSerializer(pages, many=True, context=context)
     #     return self.get_paginated_response(serializer.data)
-    #     # return Response(HAVE_NO_SUBSCRIPTIONS,
-    #     #                 status=status.HTTP_204_NO_CONTENT)
+    def subscriptions(self, request):
+        """Создание страницы подписок."""
+        queryset = User.objects.filter(following__user=self.request.user)
+        # if queryset:
+        pages = self.paginate_queryset(queryset)
+        serializer = FollowSerializer(pages, many=True,
+                                      context={'request': request})
+        return self.get_paginated_response(serializer.data)
+        # return Response(HAVE_NO_SUBSCRIPTIONS,
+        #                 status=status.HTTP_204_NO_CONTENT)
+
     @action(
         detail=True,
         methods=('post', 'delete'),
