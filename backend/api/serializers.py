@@ -238,6 +238,7 @@ class FollowSerializer(UserSerializer):
         source='recipes.count',
         read_only=True
     )
+    avatar = serializers.ImageField(source='author.avatar')
 
     class Meta:
         model = User
