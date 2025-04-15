@@ -4,6 +4,7 @@ from api.constants import (MAX_COLOR_LENGTH, MAX_EMAIL_LENGTH,
                            MAX_LENGTH_USERNAME, MAX_MEASUREMENT_UNIT_LENGTH)
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models import Q
 
 from .validators import min_time_validator, validate_username
 
@@ -43,24 +44,23 @@ class User(AbstractUser):
     )
     first_name = models.CharField(
         max_length=MAX_LENGTH_FIRST_NAME,
-        null=True,
+        blank=True,
         verbose_name='Имя'
     )
     last_name = models.CharField(
         max_length=MAX_LENGTH_LAST_NAME,
-        null=True,
+        blank=True,
         verbose_name='Фамилия'
     )
     avatar = models.ImageField(
         upload_to='users/',
         null=True,
-        blank=False,
         verbose_name='Фото профиля'
     )
 
     @property
     def is_admin(self):
-        return self.role == ADMIN
+        return self.role == ADMIN or self.is_superuser
 
     class Meta(AbstractUser.Meta):
         ordering = ('id',)
@@ -110,15 +110,9 @@ class Ingredient(models.Model):
         verbose_name='Единица измерения')
 
     class Meta:
-        ordering = ('id',)
+        ordering = ('name',)
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
-        # constraints = [
-        #     models.UniqueConstraint(
-        #         fields=['name', 'measurement_unit'],
-        #         name='unique_name_measurement_unit'
-        #     )
-        # ]
 
     def __str__(self):
         return self.name
@@ -169,7 +163,7 @@ class Recipe(models.Model):
         ordering = ('-pub_date',)
         constraints = [
             models.UniqueConstraint(
-                fields=['name', 'author'],
+                fields=('name', 'author'),
                 name='unique_name_author'
             )
         ]
@@ -219,15 +213,19 @@ class RecipeIngredient(models.Model):
         on_delete=models.CASCADE,
         related_name='recipe_ingredients', verbose_name='Рецепт')
     amount = models.PositiveSmallIntegerField(
-        # validators=(ingredient_amount_validator,),
         verbose_name='Количество',
         blank=False,
     )
 
     class Meta:
-        ordering = ('-id',)
         verbose_name = 'Ингредиент для рецепта'
-        verbose_name_plural = 'Ингредиенты для рецепта'
+        verbose_name_plural = 'Ингредиенты для рецепта',
+        constraints = [
+            models.UniqueConstraint(
+                fields=['ingredient', 'recipe'],
+                name='unique_ingredient_in_recipe'
+            ),
+        ]
 
     def __str__(self):
         return (f'{self.ingredient.name} - '
@@ -263,8 +261,10 @@ class Follow(models.Model):
         verbose_name_plural = 'Подписки'
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'author'], name='unique_follow'
-            )
+                fields=['user', 'author'], name='unique_follow'),
+            models.CheckConstraint(
+                check=~Q(user=models.F('author')),
+                name='prevent_self_follow')
         ]
 
     def __str__(self):
