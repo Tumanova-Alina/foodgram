@@ -5,8 +5,8 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.serializers import SetPasswordSerializer
-from recipes.models import (Follow, Ingredient, Recipe, RecipeIngredient,
-                            ShoppingList, Tag, User)
+from recipes.models import (Follow, Ingredient, Recipe, RecipeIngredient, Tag,
+                            User)
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
@@ -197,11 +197,11 @@ class RecipeViewSet(ModelViewSet):
         elif self.action in ('create', 'partial_update'):
             return CreateRecipeSerializer
 
-    def get_serializer_context(self):
-        """Передача контекста."""
-        context = super().get_serializer_context()
-        context.update({'request': self.request})
-        return context
+    # def get_serializer_context(self):
+    #     """Передача контекста."""
+    #     context = super().get_serializer_context()
+    #     context.update({'request': self.request})
+    #     return context
 
     @action(
         detail=True,
@@ -257,7 +257,9 @@ class RecipeViewSet(ModelViewSet):
     def shopping_list(self, request, pk):
         """Управление списком покупок."""
         user = request.user
-        recipe = get_object_or_404(Recipe, id=pk)
+        self.lookup_url_kwarg = 'pk'
+        self.lookup_field = 'id'
+        recipe = self.get_object()
         shopping_item = user.shopping_list.filter(recipe=recipe)
 
         if request.method == 'POST':
@@ -266,8 +268,11 @@ class RecipeViewSet(ModelViewSet):
                     {'error': RECIPE_ALREADY_EXISTS_IN_SHOPPING_LIST},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            ShoppingList.objects.create(user=request.user, recipe=recipe)
-            serializer = RecipeSerializer(recipe, context={'request': request})
+            serializer = RecipeSerializer(
+                data={'user': user.id, 'recipe': recipe.id},
+                context={'request': request})
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         elif request.method == 'DELETE':
@@ -287,9 +292,9 @@ class RecipeViewSet(ModelViewSet):
         try:
             shopping_list_body = (
                 "{} - {} ({})\n".format(
-                    ingredient.get("ingredient__name", "Не указано"),
-                    ingredient.get("total", "Не указано"),
-                    ingredient.get("ingredient__measurement_unit", "")
+                    ingredient.get('ingredient__name', 'Не указано'),
+                    ingredient.get('total', 'Не указано'),
+                    ingredient.get('ingredient__measurement_unit', '')
                 )
                 for ingredient in ingredients
             )
