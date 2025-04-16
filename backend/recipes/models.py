@@ -111,13 +111,7 @@ class Ingredient(models.Model):
     class Meta:
         ordering = ('name',)
         verbose_name = 'Ингредиент'
-        verbose_name_plural = 'Ингредиенты',
-        constraints = [
-            models.UniqueConstraint(
-                fields=('name', 'measurement_unit'),
-                name='unique_ingredient'
-            )
-        ]
+        verbose_name_plural = 'Ингредиенты'
 
     def __str__(self):
         return self.name
@@ -302,13 +296,7 @@ class Favorite(models.Model):
     class Meta:
         ordering = ('-pub_date',)
         verbose_name = 'Избранное'
-        verbose_name_plural = 'Избранное',
-        constraints = [
-            models.UniqueConstraint(
-                fields=('user', 'recipe'),
-                name='unique_favorite'
-            )
-        ]
+        verbose_name_plural = 'Избранное'
 
     def __str__(self):
         return f'{self.user} добавил в избранное рецепт \"{self.recipe}\"'
@@ -340,13 +328,7 @@ class ShoppingList(models.Model):
     class Meta:
         ordering = ('-pub_date',)
         verbose_name = 'Список покупок'
-        verbose_name_plural = 'Списки покупок',
-        constraints = [
-            models.UniqueConstraint(
-                fields=('user', 'recipe'),
-                name='unique_shopping_list'
-            )
-        ]
+        verbose_name_plural = 'Списки покупок'
 
     def __str__(self):
         return f'{self.user} добавил в список покупок рецепт \"{self.recipe}\"'
