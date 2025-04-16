@@ -45,9 +45,9 @@ class UserSerializer(BaseUserSerializer):
     def get_is_subscribed(self, obj):
         """Проверка подписки."""
         user = self.context['request'].user
-        if user.is_anonymous:
-            return False
-        return Follow.objects.filter(user=user, author=obj.id).exists()
+        return (
+            not user.is_anonymous and user.follower.filter(author=obj).exists()
+        )
 
 
 class CreateUserSerializer(UserCreateSerializer):
@@ -137,7 +137,7 @@ class CreateRecipeIngredientsSerializer(serializers.ModelSerializer):
     """Сериализатор ингредиентов в рецептах."""
 
     id = serializers.IntegerField()
-    amount = serializers.IntegerField()
+    # amount = serializers.IntegerField()
 
     class Meta:
         model = RecipeIngredient
@@ -166,25 +166,6 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
 
     def create_ingredients(self, ingredients, recipe):
         """Создание ингредиентов."""
-        # ingredient_ids = [
-        #     ingredient.get(
-        #         'id') for ingredient in ingredients if 'id' in ingredient]
-        # existing_ingredients = Ingredient.objects.filter(
-        # id__in=ingredient_ids)
-        # ingredient_map = {
-        #     ingredient.id: ingredient for ingredient in existing_ingredients}
-
-        # all_ingredients = [
-        #     RecipeIngredient(
-        #         recipe_id=recipe.id,
-        #         ingredient_id=ingredient_id,
-        #         amount=ingredient.get('amount')
-        #     )
-        #     for ingredient in ingredients
-        #     for ingredient_id in [ingredient.get('id')]
-        #     if ingredient_id in ingredient_map
-        # ]
-        # RecipeIngredient.objects.bulk_create(all_ingredients)
         ingredients_data = {
             ingredient['id']: ingredient
             for ingredient in ingredients
