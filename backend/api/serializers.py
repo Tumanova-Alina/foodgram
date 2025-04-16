@@ -137,7 +137,6 @@ class CreateRecipeIngredientsSerializer(serializers.ModelSerializer):
     """Сериализатор ингредиентов в рецептах."""
 
     id = serializers.IntegerField()
-    # amount = serializers.IntegerField()
 
     class Meta:
         model = RecipeIngredient
@@ -239,7 +238,7 @@ class FollowSerializer(UserSerializer):
         source='recipes.count',
         read_only=True
     )
-    avatar = serializers.ImageField(source='author.avatar')
+    avatar = serializers.ImageField(source='avatar', read_only=True)
 
     class Meta:
         model = User

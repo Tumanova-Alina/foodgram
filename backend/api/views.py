@@ -147,18 +147,6 @@ class UserViewSet(viewsets.ModelViewSet):
         author = self.get_object()
 
         if request.method == 'POST':
-            # if user == author:
-            #     return Response(
-            #         CANT_SUBSCRIBE_TO_YOURSELF,
-            #         status=status.HTTP_400_BAD_REQUEST
-            #     )
-            # if user.following.filter(author=author).exists():
-            #     return Response(
-            #         ALREADY_SUBSCRIBED.format(author=author),
-            #         status=status.HTTP_400_BAD_REQUEST
-            #     )
-
-            # Follow.objects.create(user=user, author=author)
             serializer = FollowSerializer(
                 data={'user': user.id, 'author': author.id},
                 context={'request': request}
