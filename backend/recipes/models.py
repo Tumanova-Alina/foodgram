@@ -63,7 +63,6 @@ class User(AbstractUser):
         return self.role == ADMIN or self.is_superuser
 
     class Meta(AbstractUser.Meta):
-        ordering = ('id',)
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
 
@@ -112,7 +111,13 @@ class Ingredient(models.Model):
     class Meta:
         ordering = ('name',)
         verbose_name = 'Ингредиент'
-        verbose_name_plural = 'Ингредиенты'
+        verbose_name_plural = 'Ингредиенты',
+        constraints = [
+            models.UniqueConstraint(
+                fields=('name', 'measurement_unit'),
+                name='unique_ingredient'
+            )
+        ]
 
     def __str__(self):
         return self.name
@@ -191,7 +196,7 @@ class RecipeTag(models.Model):
         verbose_name_plural = 'Теги рецепта'
         constraints = [
             models.UniqueConstraint(
-                fields=['tag', 'recipe'],
+                fields=('tag', 'recipe'),
                 name='unique_recipe_tag')
         ]
 
@@ -222,7 +227,7 @@ class RecipeIngredient(models.Model):
         verbose_name_plural = 'Ингредиенты для рецепта',
         constraints = [
             models.UniqueConstraint(
-                fields=['ingredient', 'recipe'],
+                fields=('ingredient', 'recipe'),
                 name='unique_ingredient_in_recipe'
             ),
         ]
@@ -261,7 +266,7 @@ class Follow(models.Model):
         verbose_name_plural = 'Подписки'
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'author'], name='unique_follow'),
+                fields=('user', 'author'), name='unique_follow'),
             models.CheckConstraint(
                 check=~Q(user=models.F('author')),
                 name='prevent_self_follow')
@@ -297,7 +302,13 @@ class Favorite(models.Model):
     class Meta:
         ordering = ('-pub_date',)
         verbose_name = 'Избранное'
-        verbose_name_plural = 'Избранное'
+        verbose_name_plural = 'Избранное',
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'recipe'),
+                name='unique_favorite'
+            )
+        ]
 
     def __str__(self):
         return f'{self.user} добавил в избранное рецепт \"{self.recipe}\"'
@@ -329,7 +340,13 @@ class ShoppingList(models.Model):
     class Meta:
         ordering = ('-pub_date',)
         verbose_name = 'Список покупок'
-        verbose_name_plural = 'Списки покупок'
+        verbose_name_plural = 'Списки покупок',
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'recipe'),
+                name='unique_shopping_list'
+            )
+        ]
 
     def __str__(self):
         return f'{self.user} добавил в список покупок рецепт \"{self.recipe}\"'

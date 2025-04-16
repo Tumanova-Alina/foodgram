@@ -1,4 +1,3 @@
-import logging
 import os
 
 from django.db.models import Sum
@@ -28,8 +27,6 @@ from .serializers import (CreateRecipeSerializer, CreateUserSerializer,
                           CurrentUserPhotoSerializer, FollowSerializer,
                           IngredientSerializer, RecipeSerializer,
                           TagSerializer, UserSerializer)
-
-logger = logging.getLogger(__name__)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -132,8 +129,6 @@ class UserViewSet(viewsets.ModelViewSet):
         queryset = request.user.following.all()
         pages = self.paginate_queryset(queryset)
         context = self.get_serializer_context()
-        logger.info(
-            f'Контекст, который передается в FollowSerializer: {context}')
         serializer = FollowSerializer(pages, many=True, context=context)
         return self.get_paginated_response(serializer.data)
 
@@ -155,10 +150,6 @@ class UserViewSet(viewsets.ModelViewSet):
             serializer = FollowSerializer(
                 data={'user': user.id, 'author': author.id},
                 context={'request': request}
-            )
-            logger.info(
-                f'Контекст в FollowSerializer при создании подписки: {request}'
-                f'Автор: {author}'
             )
             serializer.is_valid(raise_exception=True)
             serializer.save()
