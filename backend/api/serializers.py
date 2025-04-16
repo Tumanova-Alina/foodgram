@@ -1,3 +1,5 @@
+import logging
+
 from django.db import transaction
 from djoser.serializers import UserCreateSerializer
 from djoser.serializers import UserSerializer as BaseUserSerializer
@@ -12,6 +14,8 @@ from rest_framework.serializers import ModelSerializer, ValidationError
 from .constants import (ALREADY_SUBSCRIBED, CANT_SUBSCRIBE_TO_YOURSELF,
                         INVALID_PASSWORD)
 from .serializers_fields import Base64ImageField, Hex2NameColor
+
+logger = logging.getLogger(__name__)
 
 
 class TagSerializer(ModelSerializer):
@@ -239,7 +243,7 @@ class FollowSerializer(UserSerializer):
         read_only=True
     )
     avatar = serializers.ImageField(source='author.avatar', read_only=True)
-    print('переменная в поле Avatar: {avatar}')
+    logger.info('переменная в поле Avatar: {avatar}')
 
     class Meta:
         model = User
