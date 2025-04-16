@@ -166,24 +166,43 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
 
     def create_ingredients(self, ingredients, recipe):
         """Создание ингредиентов."""
-        ingredient_ids = [
-            ingredient.get(
-                'id') for ingredient in ingredients if 'id' in ingredient]
-        existing_ingredients = Ingredient.objects.filter(id__in=ingredient_ids)
-        ingredient_map = {
-            ingredient.id: ingredient for ingredient in existing_ingredients}
+        # ingredient_ids = [
+        #     ingredient.get(
+        #         'id') for ingredient in ingredients if 'id' in ingredient]
+        # existing_ingredients = Ingredient.objects.filter(
+        # id__in=ingredient_ids)
+        # ingredient_map = {
+        #     ingredient.id: ingredient for ingredient in existing_ingredients}
 
-        all_ingredients = [
-            RecipeIngredient(
-                recipe_id=recipe.id,
-                ingredient_id=ingredient_id,
-                amount=ingredient.get('amount')
-            )
+        # all_ingredients = [
+        #     RecipeIngredient(
+        #         recipe_id=recipe.id,
+        #         ingredient_id=ingredient_id,
+        #         amount=ingredient.get('amount')
+        #     )
+        #     for ingredient in ingredients
+        #     for ingredient_id in [ingredient.get('id')]
+        #     if ingredient_id in ingredient_map
+        # ]
+        # RecipeIngredient.objects.bulk_create(all_ingredients)
+        ingredients_data = {
+            ingredient['id']: ingredient
             for ingredient in ingredients
-            for ingredient_id in [ingredient.get('id')]
-            if ingredient_id in ingredient_map
+            if 'id' in ingredient
+        }
+        existing_ingredients = Ingredient.objects.filter(
+            id__in=ingredients_data.keys()
+        )
+
+        recipe_ingredients = [
+            RecipeIngredient(
+                recipe=recipe,
+                ingredient=ingredient,
+                amount=ingredients_data[ingredient.id].get('amount')
+            )
+            for ingredient in existing_ingredients
         ]
-        RecipeIngredient.objects.bulk_create(all_ingredients)
+        RecipeIngredient.objects.bulk_create(recipe_ingredients)
 
     def create_tags(self, tags, recipe):
         """Добавление тега."""
@@ -250,7 +269,7 @@ class FollowSerializer(UserSerializer):
         """Получение рецептов."""
         request = self.context['request']
         recipes = obj.recipes.all()
-        recipes_limit = request.query_params['recipes_limit']
+        recipes_limit = request.query_params.get('recipes_limit')
         if recipes_limit:
             recipes = recipes[:int(recipes_limit)]
         return AnotherRecipeSerializer(recipes, many=True).data
