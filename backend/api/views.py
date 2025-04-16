@@ -1,4 +1,3 @@
-import itertools
 import os
 
 from django.db.models import Sum
@@ -14,7 +13,6 @@ from rest_framework.exceptions import NotFound
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-# from rest_framework.serializers import ValidationError
 from rest_framework.viewsets import ModelViewSet
 
 from .constants import (ALREADY_SUBSCRIBED, CANT_SUBSCRIBE_TO_YOURSELF,
@@ -284,21 +282,22 @@ class RecipeViewSet(ModelViewSet):
     @staticmethod
     def get_shopping_list(ingredients):
         """Создание списка для загрузки."""
-        shopping_list_header = ("Список покупок:\n",)
+        shopping_list_header = ('Список покупок:\n',)
 
         try:
             shopping_list_body = (
-                f"{ingredient.get('ingredient__name', 'Не указано')} - "
-                f"{ingredient.get('total', 'Не указано')} "
-                f"({ingredient.get('ingredient__measurement_unit', '')})"
+                "{} - {} ({})\n".format(
+                    ingredient.get("ingredient__name", "Не указано"),
+                    ingredient.get("total", "Не указано"),
+                    ingredient.get("ingredient__measurement_unit", "")
+                )
                 for ingredient in ingredients
             )
         except (TypeError, AttributeError) as error:
             raise ValueError(
                 UNEXPECTED_FORMAT_OF_DATA) from error
 
-        return "".join(
-            itertools.chain(shopping_list_header, shopping_list_body))
+        return ''.join((*shopping_list_header, *shopping_list_body))
 
     @action(
         detail=False,
