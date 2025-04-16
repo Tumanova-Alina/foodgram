@@ -5,8 +5,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.serializers import SetPasswordSerializer
-from recipes.models import (Follow, Ingredient, Recipe, RecipeIngredient, Tag,
-                            User)
+from recipes.models import Follow, Ingredient, Recipe, Tag, User
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
@@ -197,12 +196,6 @@ class RecipeViewSet(ModelViewSet):
         elif self.action in ('create', 'partial_update'):
             return CreateRecipeSerializer
 
-    # def get_serializer_context(self):
-    #     """Передача контекста."""
-    #     context = super().get_serializer_context()
-    #     context.update({'request': self.request})
-    #     return context
-
     @action(
         detail=True,
         methods=('post', 'delete'),
@@ -313,9 +306,11 @@ class RecipeViewSet(ModelViewSet):
     )
     def download_shopping_list(self, request):
         """Загрузка файла с ингредиентами."""
-        ingredients = RecipeIngredient.objects.filter(
-            recipe__shopping_list__user=request.user
-        ).values(
+        user = request.user
+        self.lookup_url_kwarg = 'pk'
+        self.lookup_field = 'id'
+        recipe = self.get_object()
+        ingredients = user.shopping_list.filter(recipe=recipe).values(
             'ingredient__name',
             'ingredient__measurement_unit'
         ).annotate(total=Sum('amount')).order_by('ingredient__name')
