@@ -5,17 +5,16 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.serializers import SetPasswordSerializer
-from recipes.models import Follow, Ingredient, Recipe, Tag, User
+from recipes.models import Ingredient, Recipe, Tag, User
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import MethodNotAllowed, NotFound
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from .constants import (ALREADY_SUBSCRIBED, CANT_SUBSCRIBE_TO_YOURSELF,
-                        HAVE_NO_AVATAR, METHOD_NOT_ALLOWED,
+from .constants import (HAVE_NO_AVATAR, METHOD_NOT_ALLOWED,
                         NO_RECIPES_TO_GENERATE_SHOPPING_LIST, NOT_SUBSCRIBED,
                         RECIPE_ALREADY_EXISTS_IN_FAVORITES,
                         RECIPE_ALREADY_EXISTS_IN_SHOPPING_LIST,
@@ -99,10 +98,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 user.avatar.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
             raise NotFound(HAVE_NO_AVATAR)
-        return Response(
-            {'detail': METHOD_NOT_ALLOWED},
-            status=status.HTTP_405_METHOD_NOT_ALLOWED
-        )
+        raise MethodNotAllowed(request.method, detail=METHOD_NOT_ALLOWED)
 
     @action(
         methods=('post',),
@@ -151,18 +147,24 @@ class UserViewSet(viewsets.ModelViewSet):
         author = self.get_object()
 
         if request.method == 'POST':
-            if user == author:
-                return Response(
-                    CANT_SUBSCRIBE_TO_YOURSELF,
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            if user.following.filter(author=author).exists():
-                return Response(
-                    ALREADY_SUBSCRIBED.format(author=author),
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+            # if user == author:
+            #     return Response(
+            #         CANT_SUBSCRIBE_TO_YOURSELF,
+            #         status=status.HTTP_400_BAD_REQUEST
+            #     )
+            # if user.following.filter(author=author).exists():
+            #     return Response(
+            #         ALREADY_SUBSCRIBED.format(author=author),
+            #         status=status.HTTP_400_BAD_REQUEST
+            #     )
 
-            Follow.objects.create(user=user, author=author)
+            # Follow.objects.create(user=user, author=author)
+            serializer = FollowSerializer(
+                data={'user': user.id, 'author': author.id},
+                context={'request': request}
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
             return Response(
                 SUCCESSFULLY_SUBSCRIBED.format(author=author),
                 status=status.HTTP_201_CREATED
@@ -229,7 +231,6 @@ class RecipeViewSet(ModelViewSet):
 
     @action(
         detail=True,
-        methods=('get',),
         url_path='get-link',
         url_name='get-link',
     )

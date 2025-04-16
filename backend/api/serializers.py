@@ -9,7 +9,8 @@ from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 from rest_framework.serializers import ModelSerializer, ValidationError
 
-from .constants import INVALID_PASSWORD
+from .constants import (ALREADY_SUBSCRIBED, CANT_SUBSCRIBE_TO_YOURSELF,
+                        INVALID_PASSWORD)
 from .serializers_fields import Base64ImageField, Hex2NameColor
 
 
@@ -253,6 +254,16 @@ class FollowSerializer(UserSerializer):
         if recipes_limit:
             recipes = recipes[:int(recipes_limit)]
         return AnotherRecipeSerializer(recipes, many=True).data
+
+    def validate(self, data):
+        user = self.context['request'].user
+        author = data['author']
+
+        if user == author:
+            raise ValidationError(CANT_SUBSCRIBE_TO_YOURSELF)
+        if Follow.objects.filter(user=user, author=author).exists():
+            raise ValidationError(ALREADY_SUBSCRIBED)
+        return data
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
