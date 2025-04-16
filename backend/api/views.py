@@ -129,6 +129,7 @@ class UserViewSet(viewsets.ModelViewSet):
         queryset = request.user.following.all()
         pages = self.paginate_queryset(queryset)
         context = self.get_serializer_context()
+        print(f'Контекст, который передается в FollowSerializer: {context}')
         serializer = FollowSerializer(pages, many=True, context=context)
         return self.get_paginated_response(serializer.data)
 
@@ -150,6 +151,10 @@ class UserViewSet(viewsets.ModelViewSet):
             serializer = FollowSerializer(
                 data={'user': user.id, 'author': author.id},
                 context={'request': request}
+            )
+            print(
+                f'Контекст в FollowSerializer при создании подписки: {request}'
+                f'Автор: {author}'
             )
             serializer.is_valid(raise_exception=True)
             serializer.save()

@@ -238,7 +238,8 @@ class FollowSerializer(UserSerializer):
         source='recipes.count',
         read_only=True
     )
-    avatar = serializers.ImageField(source='avatar', read_only=True)
+    avatar = serializers.ImageField(source='author.avatar', read_only=True)
+    print('переменная в поле Avatar: {avatar}')
 
     class Meta:
         model = User
