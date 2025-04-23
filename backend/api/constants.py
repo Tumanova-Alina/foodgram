@@ -48,3 +48,10 @@ INVALID_PASSWORD = 'Неправильный пароль'
 HAVE_NO_AVATAR = 'Аватар не установлен.'
 METHOD_NOT_ALLOWED = 'Этот метод запрещен.'
 UNEXPECTED_FORMAT_OF_DATA = 'Неожиданный формат данных для ингредиентов.'
+SUCCESSFULLY_FAVORITED = 'Рецепт "{recipe}" успешно добавлен в избранное'
+SUCCESSFULLY_DELETED_FAVORITE = (
+    'Рецепт "{recipe}" успешно удален из избранного')
+SUCCESSFULLY_ADDED_TO_SHOPPING_LIST = (
+    'Рецепт "{recipe}" успешно добавлен в список покупок')
+SUCCESSFULLY_DELETED_FROM_SHOPPING_LIST = (
+    'Рецепт "{recipe}" успешно удален из списка покупок')

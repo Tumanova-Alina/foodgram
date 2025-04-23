@@ -54,7 +54,7 @@ class User(AbstractUser):
     )
     avatar = models.ImageField(
         upload_to='users/',
-        null=True,
+        blank=True,
         verbose_name='Фото профиля'
     )
 
@@ -218,7 +218,7 @@ class RecipeIngredient(models.Model):
 
     class Meta:
         verbose_name = 'Ингредиент для рецепта'
-        verbose_name_plural = 'Ингредиенты для рецепта',
+        verbose_name_plural = 'Ингредиенты для рецепта'
         constraints = [
             models.UniqueConstraint(
                 fields=('ingredient', 'recipe'),
@@ -243,7 +243,6 @@ class Follow(models.Model):
     author = models.ForeignKey(
         User,
         blank=True,
-        null=True,
         on_delete=models.CASCADE,
         related_name='following',
         verbose_name='Автор'
@@ -282,7 +281,6 @@ class Favorite(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         blank=True,
-        null=True,
         on_delete=models.CASCADE,
         related_name='favorites',
         verbose_name='Понравившийся рецепт'
@@ -297,6 +295,11 @@ class Favorite(models.Model):
         ordering = ('-pub_date',)
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранное'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'recipe'), name='unique_favorite'
+            )
+        ]
 
     def __str__(self):
         return f'{self.user} добавил в избранное рецепт \"{self.recipe}\"'
@@ -314,7 +317,6 @@ class ShoppingList(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         blank=True,
-        null=True,
         on_delete=models.CASCADE,
         related_name='shopping_list',
         verbose_name='Рецепт'
@@ -329,6 +331,11 @@ class ShoppingList(models.Model):
         ordering = ('-pub_date',)
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Списки покупок'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'recipe'), name='unique_shopping_item'
+            )
+        ]
 
     def __str__(self):
         return f'{self.user} добавил в список покупок рецепт \"{self.recipe}\"'
