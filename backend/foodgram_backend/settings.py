@@ -25,7 +25,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY', get_random_secret_key())
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+# DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost').split(', ')
 
@@ -95,6 +96,7 @@ WSGI_APPLICATION = 'foodgram_backend.wsgi.application'
 #     }
 # }
 
+# TODO: test
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',

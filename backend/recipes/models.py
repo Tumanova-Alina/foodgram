@@ -234,12 +234,16 @@ class RecipeIngredient(models.Model):
 class Follow(models.Model):
     """Подписка на авторов."""
 
+    # TODO: Наоборот, мы берем пользователя, и получаем всех авторов, на которых он подписан.
+    # Т.е. related_name, по идеи, following - авторы.
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='follower',
         verbose_name='Подписчик'
     )
+    # TODO: Наоборот, мы берем автора, и получаем всех его подписчиков.
+    # Т.е. related_name, по идеи, follower - подписчики.
     author = models.ForeignKey(
         User,
         blank=True,

@@ -128,7 +128,9 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def subscriptions(self, request):
         """Создание страницы подписок."""
-        queryset = request.user.following.all()
+        # TODO: обратно поменять, после изменения related_name
+        # queryset = request.user.following.all()
+        queryset = request.user.follower.all()
         pages = self.paginate_queryset(queryset)
         context = self.get_serializer_context()
         serializer = FollowSerializer(pages, many=True, context=context)
