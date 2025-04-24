@@ -55,3 +55,7 @@ SUCCESSFULLY_ADDED_TO_SHOPPING_LIST = (
     'Рецепт "{recipe}" успешно добавлен в список покупок')
 SUCCESSFULLY_DELETED_FROM_SHOPPING_LIST = (
     'Рецепт "{recipe}" успешно удален из списка покупок')
+NAME_KEY = 'recipe__recipe_ingredients__ingredient__name'
+UNIT_KEY = 'recipe__recipe_ingredients__ingredient__measurement_unit'
+TOTAL_KEY = 'total'
+AMOUNT_KEY = 'recipe__recipe_ingredients__amount'

@@ -1,11 +1,6 @@
 version: '3.9'
 
 services:
-  # db:
-  #   image: postgres:13.10
-  #   env_file: .env
-  #   volumes:
-  #     - pg_data:/var/lib/postgresql/data
   backend:
     build: ./backend/
     env_file: .env
@@ -14,8 +9,6 @@ services:
       - ./data:/app/data
       - static:/backend_static
       - media:/app/media
-    # depends_on:
-    #   - db
   frontend:
     env_file: .env
     build: ./frontend/
@@ -32,12 +25,10 @@ services:
     volumes:
       - static:/static/
       - media:/media
-      # - ./nginx.conf:/etc/nginx/conf.d/default.conf
       - ../frontend/build:/usr/share/nginx/html/
       - ../docs/:/usr/share/nginx/html/api/docs/
 
 volumes:
-  # pg_data:
   static:
   media:
   data:

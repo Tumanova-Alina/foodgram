@@ -46,12 +46,10 @@ class UserSerializer(BaseUserSerializer):
     def get_is_subscribed(self, author):
         """Проверка подписки."""
         user = self.context['request'].user
-        # return (
-        #     not user.is_anonymous and user.following.filter(
-        #         author=author).exists()
-        # )
-        return (user.is_authenticated
-                and Follow.objects.filter(user=user, author=author).exists())
+        return (
+            not user.is_anonymous and user.follower.filter(
+                author=author).exists()
+        )
 
 
 class CreateUserSerializer(UserCreateSerializer):
@@ -259,11 +257,6 @@ class FollowSerializer(serializers.ModelSerializer):
             raise ValidationError(ALREADY_SUBSCRIBED)
         return data
 
-    # def create(self, validated_data):
-    #     user = self.context['request'].user
-    #     author = validated_data.get('author')
-    #     return Follow.objects.create(user=user, author=author)
-
     def to_representation(self, instance):
         return FollowReadSerializer(
             instance=instance.author, context=self.context).data
@@ -298,42 +291,6 @@ class FollowReadSerializer(UserSerializer):
             'request': self.context['request']}, many=True).data
 
 
-# class FollowSerializer(UserSerializer):
-#     """Сериализатор подписок."""
-
-#     recipes = serializers.SerializerMethodField(
-#         method_name='get_recipes')
-#     recipes_count = serializers.IntegerField(
-#         source='recipes.count',
-#         read_only=True
-#     )
-#     avatar = serializers.ImageField(source='author.avatar', read_only=True)
-
-#     class Meta:
-#         model = User
-#         fields = ('id', 'username', 'email', 'first_name', 'last_name',
-#                   'avatar', 'is_subscribed', 'recipes', 'recipes_count',)
-
-#     def get_recipes(self, obj):
-#         """Получение рецептов."""
-#         request = self.context['request']
-#         recipes = obj.recipes.all()
-#         recipes_limit = request.query_params.get('recipes_limit')
-#         if recipes_limit:
-#             recipes = recipes[:int(recipes_limit)]
-#         return AnotherRecipeSerializer(recipes, many=True).data
-
-#     def validate(self, data):
-#         user = self.context['request'].user
-#         author = data['author']
-
-#         if user == author:
-#             raise ValidationError(CANT_SUBSCRIBE_TO_YOURSELF)
-#         if user.following.filter(author=author).exists():
-#             raise ValidationError(ALREADY_SUBSCRIBED)
-#         return data
-
-
 class FavoriteSerializer(serializers.ModelSerializer):
     """Добавление в избранное."""
 
@@ -350,15 +307,6 @@ class FavoriteSerializer(serializers.ModelSerializer):
         if user.favorites.filter(recipe=recipe).exists():
             raise ValidationError(RECIPE_ALREADY_EXISTS_IN_FAVORITES)
         return data
-
-    # def to_representation(self, instance):
-    #     """Представление модели."""
-    #     recipe = instance.recipe
-    #     serializer = AnotherRecipeSerializer(
-    #         recipe,
-    #         context={'request': self.context['request']}
-    #     )
-    #     return serializer.data
 
 
 class CurrentUserPhotoSerializer(serializers.ModelSerializer):

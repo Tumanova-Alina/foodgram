@@ -14,21 +14,23 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from .constants import (HAVE_NO_AVATAR, METHOD_NOT_ALLOWED,
-                        NO_RECIPES_TO_GENERATE_SHOPPING_LIST, NOT_SUBSCRIBED,
-                        SUCCESSFULLY_DELETED_FAVORITE, SUCCESSFULLY_FAVORITED,
+from .constants import (AMOUNT_KEY, HAVE_NO_AVATAR, METHOD_NOT_ALLOWED,
+                        NAME_KEY, NO_RECIPES_TO_GENERATE_SHOPPING_LIST,
+                        NOT_SUBSCRIBED, RECIPE_NOT_IN_FAVORITES,
+                        RECIPE_NOT_IN_SHOPPING_LIST,
                         SUCCESSFULLY_ADDED_TO_SHOPPING_LIST,
+                        SUCCESSFULLY_DELETED_FAVORITE,
                         SUCCESSFULLY_DELETED_FROM_SHOPPING_LIST,
-                        RECIPE_NOT_IN_FAVORITES, RECIPE_NOT_IN_SHOPPING_LIST,
                         SUCCESSFULLY_DELETED_SUBSCRIPTION,
-                        SUCCESSFULLY_SUBSCRIBED, UNEXPECTED_FORMAT_OF_DATA)
+                        SUCCESSFULLY_FAVORITED, TOTAL_KEY,
+                        UNEXPECTED_FORMAT_OF_DATA, UNIT_KEY)
 from .filters import IngredientFilter, RecipeFilter
 from .permissions import IsAdminAuthorOrReadOnly
 from .serializers import (CreateRecipeSerializer, CreateUserSerializer,
-                          CurrentUserPhotoSerializer, FollowSerializer,
-                          IngredientSerializer, RecipeSerializer,
-                          TagSerializer, UserSerializer, FavoriteSerializer,
-                          ShoppingListSerializer, FollowReadSerializer)
+                          CurrentUserPhotoSerializer, FavoriteSerializer,
+                          FollowSerializer, IngredientSerializer,
+                          RecipeSerializer, ShoppingListSerializer,
+                          TagSerializer, UserSerializer)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -128,7 +130,7 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def subscriptions(self, request):
         """Создание страницы подписок."""
-        queryset = request.user.following.all()
+        queryset = request.user.follower.all()
         pages = self.paginate_queryset(queryset)
         context = self.get_serializer_context()
         serializer = FollowSerializer(pages, many=True, context=context)
@@ -155,12 +157,10 @@ class UserViewSet(viewsets.ModelViewSet):
             )
             serializer.is_valid(raise_exception=True)
             serializer.save(user=self.request.user)
-            # output_serializer = FollowReadSerializer(
-            #     author, context={'request': request})
             return Response(serializer.data,
                             status=status.HTTP_201_CREATED)
 
-        deleted, _ = user.following.filter(author=author).delete()
+        deleted, _ = user.follower.filter(author=author).delete()
         if deleted:
             return Response(
                 SUCCESSFULLY_DELETED_SUBSCRIPTION.format(author=author),
@@ -195,27 +195,6 @@ class RecipeViewSet(ModelViewSet):
         url_path='favorite',
         url_name='favorite',
     )
-    # def favorite(self, request, pk):
-    #     user = request.user
-    #     recipe = get_object_or_404(Recipe, id=pk)
-    #     favorite = user.favorites.filter(recipe=recipe)
-    #     if request.method == 'POST':
-    #         if favorite.exists():
-    #             return Response(
-    #                 {'error': RECIPE_ALREADY_EXISTS_IN_FAVORITES.format(
-    #                     recipe=recipe)}, status=status.HTTP_400_BAD_REQUEST)
-    #         serializer = RecipeSerializer(
-    #             data={'user': user.id, 'recipe': recipe.id})
-    #         serializer.is_valid(raise_exception=True)
-    #         serializer.save()
-    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    #     elif request.method == 'DELETE':
-    #         if not favorite.exists():
-    #             return Response(
-    #                 {'error': RECIPE_NOT_IN_FAVORITES.format(recipe=recipe)},
-    #                 status=status.HTTP_400_BAD_REQUEST)
-    #         favorite.delete()
-    #         return Response(status=status.HTTP_204_NO_CONTENT)
     def favorite(self, request, pk):
         """Управление избранным."""
         user = request.user
@@ -255,43 +234,6 @@ class RecipeViewSet(ModelViewSet):
         recipes_url = os.getenv('RECIPES_URL', 'recipes')
         short_link = f'{frontend_url}/{recipes_url}/{recipe.id}/'
         return Response({'short-link': short_link})
-
-    # @action(
-    #     detail=True,
-    #     methods=('post', 'delete'),
-    #     permission_classes=(IsAuthenticated,),
-    #     url_path='shopping_cart',
-    #     url_name='shopping_cart',
-    # )
-    # def shopping_list(self, request, pk):
-    #     """Управление списком покупок."""
-    #     user = request.user
-    #     self.lookup_url_kwarg = 'pk'
-    #     self.lookup_field = 'id'
-    #     recipe = self.get_object()
-    #     shopping_item = user.shopping_list.filter(recipe=recipe)
-
-    #     if request.method == 'POST':
-    #         if shopping_item.exists():
-    #             return Response(
-    #                 {'error': RECIPE_ALREADY_EXISTS_IN_SHOPPING_LIST},
-    #                 status=status.HTTP_400_BAD_REQUEST
-    #             )
-    #         serializer = RecipeSerializer(
-    #             data={'user': user.id, 'recipe': recipe.id},
-    #             context={'request': request})
-    #         serializer.is_valid(raise_exception=True)
-    #         serializer.save()
-    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    #     elif request.method == 'DELETE':
-    #         if not shopping_item.exists():
-    #             return Response(
-    #                 {'error': RECIPE_NOT_IN_SHOPPING_LIST},
-    #                 status=status.HTTP_400_BAD_REQUEST
-    #             )
-    #         shopping_item.delete()
-    #         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=True,
@@ -336,9 +278,9 @@ class RecipeViewSet(ModelViewSet):
         try:
             shopping_list_body = (
                 "{} - {} ({})\n".format(
-                    ingredient.get('ingredient__name', 'Не указано'),
-                    ingredient.get('total', 'Не указано'),
-                    ingredient.get('ingredient__measurement_unit', '')
+                    ingredient.get(NAME_KEY, 'Не указано'),
+                    ingredient.get(TOTAL_KEY, 'Не указано'),
+                    ingredient.get(UNIT_KEY, 'Не указано')
                 )
                 for ingredient in ingredients
             )
@@ -350,7 +292,6 @@ class RecipeViewSet(ModelViewSet):
 
     @action(
         detail=False,
-        methods=('get',),
         permission_classes=(IsAuthenticated,),
         url_path='download_shopping_cart',
         url_name='download_shopping_cart',
@@ -358,18 +299,20 @@ class RecipeViewSet(ModelViewSet):
     def download_shopping_list(self, request):
         """Загрузка файла с ингредиентами."""
         user = request.user
-        self.lookup_url_kwarg = 'pk'
-        self.lookup_field = 'id'
-        recipe = self.get_object()
-        ingredients = user.shopping_list.filter(recipe=recipe).values(
-            'ingredient__name',
-            'ingredient__measurement_unit'
-        ).annotate(total=Sum('amount')).order_by('ingredient__name')
-        if not ingredients:
+        ingredients = user.shopping_list.values(
+            NAME_KEY,
+            UNIT_KEY,
+        ).annotate(
+            total=Sum(AMOUNT_KEY)
+        ).order_by(NAME_KEY)
+        if not ingredients.exists():
             return Response(
                 {"error": NO_RECIPES_TO_GENERATE_SHOPPING_LIST},
                 status=status.HTTP_400_BAD_REQUEST
             )
         shopping_list = self.get_shopping_list(ingredients)
-        return HttpResponse(
+        response = HttpResponse(
             shopping_list, content_type='text/plain; charset=UTF-8')
+        response['Content-Disposition'
+                 ] = 'attachment; filename="shopping_list.txt"'
+        return response
